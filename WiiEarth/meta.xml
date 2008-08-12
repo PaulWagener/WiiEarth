@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>WiiEarth</name>
+  <coder>PaulWagener</coder>
+  <version>1.0</version>
+  <short_description>Browse the world</short_description> 
+  <long_description>Use the Wiimote to browse through satellite imagery
+   
+   Controls:
+   A - Grab world
+   B - Zoom into world
+   plus minus - Zoom
+   D-pad - Move world
+   2 - Change map source
+   Home - Go back to Homebrew Channel</long_description> 
+</app>
