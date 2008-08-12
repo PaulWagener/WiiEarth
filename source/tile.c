@@ -404,6 +404,7 @@ void* downloadtile(void* tilepointer)
 		{
 			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "qrts");
 			tile->texture = getgooglesattelitetile(code);
+			free(code);
 			break;
 		}
 		
@@ -411,12 +412,14 @@ void* downloadtile(void* tilepointer)
 		{
 			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "0123");
 			tile->texture = getlivehybridtile(code);
+			free(code);
 			break;
 		}
 		case LIVE_MAP:
 		{
 			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "0123");
 			tile->texture = getlivemaptile(code);
+			free(code);
 			break;
 		}
 			
