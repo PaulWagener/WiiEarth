@@ -34,8 +34,8 @@ void initializeworld()
 {
 	world_x = 0.5;
 	world_y = 0.5;
-	world_zoom = -2;
-	world_zoom_target = 0;
+	world_zoom = 0; // Start with a zoom animation from 0 to 1
+	world_zoom_target = 1; 
 	world_zooming_to = FALSE;
 	
 	tex_loading = GRRLIB_LoadTexture(loading);

@@ -15,7 +15,7 @@ bool checktile(enum tiletype type, int x, int y, int zoom);
 void deletetile(struct tile* tile, struct tile* previoustile);
 void* downloadtile(void* tile);
 
-enum tiletype tiletype_current = GOOGLE_MAP;
+enum tiletype tiletype_current = LIVE_HYBRID;
 
 /**
  * Method that adds new relevant tiles
@@ -23,7 +23,7 @@ enum tiletype tiletype_current = GOOGLE_MAP;
 void updatetiles()
 {
 	int tiles = pow(2, world_zoom_target);
-	const int zoom = world_zoom_target < 0 ? 0 : world_zoom_target;
+	const int zoom = world_zoom_target < 1 ? 1 : world_zoom_target;
 	
 	const int x = world_x * tiles;
 	const int y = world_y * tiles;
@@ -148,20 +148,12 @@ void updatetiles()
 	{
 		switch(tiletype_current)
 		{
-			case GOOGLE_MAP:
-				tiletype_current = LIVE_HYBRID;
-				break;
-				
 			case LIVE_HYBRID:
 				tiletype_current = LIVE_MAP;
 				break;
 				
 			case LIVE_MAP:
-				tiletype_current = GOOGLE_MAP; //GOOGLE_SATELLITE  (Google satellite temporarily disabled, it causes quite a few problems)
-				break;
-			
-			case GOOGLE_SATELLITE:    
-				tiletype_current = GOOGLE_MAP;
+				tiletype_current = LIVE_HYBRID;
 				break;
 		}
 	}
@@ -245,42 +237,6 @@ u8* jpegurl2texture(char *url)
 	printf("%p\n", texture);
 	free(file.data);
 	return texture;
-}
-
-/**
- *
- */
-u8* getgooglemaptile(int x, int y, int zoom)
-{
-	const char urlformat[] = "http://mt%i.google.com/mt?v=w2.80&hl=nl&x=%i&y=%i&zoom=%i&s=Galileo";
-	
-	char url[strlen(urlformat) + 30];
-	//Google Maps spreads the load between servers mt0.google.com to mt3.google.com
-	//We also do this, but to support url caching we let the server depend on the variables
-	int randomserver = abs((x * y * zoom)) % 4;
-	int result = sprintf(url, urlformat, randomserver, x, y, zoom);
-	
-	if(result < 0)
-		return NULL;
-		
-	//Download tile
-	return pngurl2texture(url);
-	
-}
-
-u8* getgooglesattelitetile(char tcode[])
-{
-	const char urlformat[] = "http://khm%i.google.com/kh?v=30&t=%s";
-	char url[strlen(urlformat) + 30];
-	int randomserver = abs(tcode[strlen(tcode)-1]) % 4;
-	int result = sprintf(url, urlformat, randomserver, tcode);
-
-	if(result < 0)
-		return NULL;
-
-	printf("%s\n", url);
-	
-	return jpegurl2texture(url);
 }
 
 u8* getlivehybridtile(char hcode[])
@@ -396,18 +352,6 @@ void* downloadtile(void* tilepointer)
 	//Downloads the tile by calling the appropriate API
 	switch(tile->type)
 	{
-		case GOOGLE_MAP:
-			tile->texture = getgooglemaptile(tile->x, tile->y, 17 - tile->zoom);
-			break;
-
-		case GOOGLE_SATELLITE:
-		{
-			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "qrts");
-			tile->texture = getgooglesattelitetile(code);
-			free(code);
-			break;
-		}
-		
 		case LIVE_HYBRID:
 		{
 			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "0123");

@@ -7,7 +7,7 @@ extern struct tile* firsttile;
 
 enum tilestatus {INITIALIZED, DOWNLOADING, VISIBLE};
 
-enum tiletype {GOOGLE_MAP, GOOGLE_SATELLITE, LIVE_HYBRID, LIVE_MAP};
+enum tiletype {LIVE_HYBRID, LIVE_MAP};
 
 extern enum tiletype tiletype_current;
 
