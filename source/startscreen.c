@@ -1,16 +1,9 @@
 #include "startscreen.h"
 #include <wiiuse/wpad.h>
-#include "tile.h"
 #include "http.h"
 
 static u32 *xfb[2] = { NULL, NULL };
 static GXRModeObj *vmode;
-
-void wait()
-{
-	WPAD_ScanPads();
-	while(!(WPAD_ButtonsUp(0) & WPAD_BUTTON_A)) WPAD_ScanPads();
-}
 
 //Start up console
 void initialize() {
@@ -30,34 +23,34 @@ void startscreen()
 {
 	initialize();
 	printf("\n\n\n\n\n\n\n\n");
-	printf("      Wii Earth 1.0\n");
-	printf("         All images copyrighted by Google and Microsoft\n\n");
+	printf("      Wii Earth 2.0\n");
+	printf("         Images are from openstreetmap.org and maps.live.com\n\n");
 	
     printf("      Waiting for network to initialize...");
-
+	
 	s32 ip;
     while ((ip = net_init()) == -EAGAIN)
 	{
 		printf(".");
-		usleep(100000);
+		usleep(100 * 1000); //100ms
 	}
 	printf("\n");
 	
     if(ip < 0) {
-		printf("      Error while initialising, error is %i\n", ip);
+		printf("      Error while initialising, error is %i, exiting\n", ip);
+		usleep(1000 * 1000 * 1); //1 sec
+		exit(0);
 	}
         
 	char myIP[16];
     if (if_config(myIP, NULL, NULL, true) < 0) {
 		printf("      Error reading IP address, exiting");
+		usleep(1000 * 1000 * 1); //1 sec
 		exit(0);
 	}
 	printf("      Network initialised.\n");
-	
 	printf("      IP: %s\n\n", myIP);
-	
 	printf("      Have Fun!");
 	
 	usleep(1000 * 1000 * 1); //1 sec
-	}
-
+}

@@ -3,18 +3,13 @@
 
 #include "http.h"
 
-extern struct tile* firsttile;
-
-enum tilestatus {INITIALIZED, DOWNLOADING, VISIBLE};
-
-enum tiletype {LIVE_HYBRID, LIVE_MAP};
+enum tiletype {OSM, LIVE_HYBRID, LIVE_MAP};
 
 extern enum tiletype tiletype_current;
 
-#define PADTILES_TOP 1
-#define PADTILES_BOTTOM 1
-#define PADTILES_LEFT 1
-#define PADTILES_RIGHT 1
+#define NUM_TILES 9
+struct tile* tiles[NUM_TILES];
+struct tile* downloading_tile;
 
 //A tile is an image of a piece of the earth
 struct tile {
@@ -37,12 +32,9 @@ struct tile {
 	int opacity; //Between 0 and 255
 	
 	enum tiletype type;
-	
-	enum tilestatus status;
-
-	struct tile *nexttile;
 };
 
 void updatetiles();
+void drawtiles();
 
 #endif /* _TILE_H_ */

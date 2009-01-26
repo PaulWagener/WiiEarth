@@ -40,24 +40,12 @@ struct dnsentry {
 static struct dnsentry *firstdnsentry = NULL;
 static int dnsentrycount = 0;
 
-static mutex_t mutexdns = -1;
-
-void initializedns()
-{
-	LWP_MutexInit(&mutexdns, false);
-}
-
 /**
  * Performs the same function as getipbyname(),
  * except that it will prevent extremely expensive net_gethostbyname() calls by caching the result
- * and that it is threadsafe
  */
 u32 getipbynamecached(char *domain)
 {
-	//Threadsafe access
-	while(LWP_MutexLock(mutexdns) < 0)
-		usleep(100);
-	
 	//Search if this domainname is already cached
 	struct dnsentry *node = firstdnsentry;
 	struct dnsentry *previousnode = NULL;
@@ -74,7 +62,6 @@ u32 getipbynamecached(char *domain)
 				node->nextnode = firstdnsentry;
 			firstdnsentry = node;
 			
-			LWP_MutexUnlock (mutexdns);
 			return node->ip;
 		}
 		//Go to the next element in the list
@@ -86,7 +73,6 @@ u32 getipbynamecached(char *domain)
 	//No cache of this domain could be found, create a cache node and add it to the front of the cache
 	struct dnsentry *newnode = malloc(sizeof(struct dnsentry));
 	if(newnode == NULL) {
-		LWP_MutexUnlock (mutexdns);
 		return ip;
 	}
 		
@@ -94,7 +80,6 @@ u32 getipbynamecached(char *domain)
 	newnode->domain = malloc(strlen(domain)+1);
 	if(newnode->domain == NULL)
 	{
-		LWP_MutexUnlock (mutexdns);
 		free(newnode);
 		return ip;
 	}
@@ -133,6 +118,5 @@ u32 getipbynamecached(char *domain)
 		dnsentrycount--;
 	}
 
-	LWP_MutexUnlock (mutexdns);
 	return newnode->ip;
 }

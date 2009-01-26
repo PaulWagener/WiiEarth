@@ -5,7 +5,6 @@
 #include "tile.h"
 #include "input.h"
 
-#include "gfx/loading.h"
 #include "GRRLIB/GRRLIB.h"
 
 #define TILE_WIDTH 256
@@ -14,7 +13,7 @@
 #define MIN_ZOOM -1
 #define MAX_ZOOM 18
 
-#define WORLD_SIZE_AT_ZOOM0 512 //Width and height in pixels of the worldmap at zoom 0
+#define WORLD_SIZE_AT_ZOOM0 400 //Width and height in pixels of the worldmap at zoom 0
 
 //The user can 'fling' the map by grabbing and throwing it
 //The speed the map gains from this is gradually reduced to 0
@@ -34,7 +33,7 @@ struct point {
 u8 *tex_loading;
 
 //World_x and world_y represent the point that the map should be centered on
-//It is a simple coordinate system with the topleft of google's map on 0.0, 0.0
+//It is a simple coordinate system with the topleft of the map on 0.0, 0.0
 //and the bottomright on 1.0, 1.0.
 float world_x;
 float world_y;
@@ -50,7 +49,7 @@ int world_zoom_target;
 //states how many pixels the world is wide on the screen
 float world_width;
 
-//If the user gives the world a push these values will be filled with how fast the earth should slide across the screen
+//If the user gives the world a fling these values will be filled with how fast the earth should slide across the screen
 //Positive values means the map is moving to the topleft
 float world_speed_x;
 float world_speed_y;
@@ -61,7 +60,7 @@ float world_grab_x;
 float world_grab_y;
 bool world_grabbed;
 
-//Zooming towards a destination
+//Zooming towards a destination (with the B button)
 bool world_zooming_to;
 float world_zoomto_x;
 float world_zoomto_y;
@@ -75,6 +74,8 @@ float screen_right;
 void initializeworld();
 void updateworld();
 void drawworld();
-void drawtile();
+
+struct point world2screen(float lattitude, float longitude);
+struct point screen2world(float x, float y);
 
 #endif /* _WORLD_H_ */

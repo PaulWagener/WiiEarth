@@ -6,11 +6,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <ogc/mutex.h>
 #include <unistd.h> //usleep
 
 u32 getipbyname(char *domain);
 u32 getipbynamecached(char *domain);
-void initializedns();
 
 #endif /* _DNS_H_ */

@@ -4,9 +4,6 @@
 
 inline float coordinates2pixels(float degrees);
 inline float pixels2coordinates(float pixels);
-struct point world2screen(float lattitude, float longitude);
-struct point screen2world(float x, float y);
-
 
 /**
  * Wraps the GRRLIB_DrawImg function with parameters for width & height instead of scaleX & scaleY
@@ -38,7 +35,10 @@ void initializeworld()
 	world_zoom_target = 1; 
 	world_zooming_to = FALSE;
 	
-	tex_loading = GRRLIB_LoadTexture(loading);
+	int i;
+	for(i = 0; i < NUM_TILES; i++) {
+		tiles[i] = NULL;
+	}
 }
 
 
@@ -60,7 +60,7 @@ void updateworld()
 	//Let world_zoom approach world_zoom_target
 	world_zoom = world_zoom + ((world_zoom_target - world_zoom) / 10);
 	
-	world_width = coordinates2pixels(1); //Used within rendertile();
+	world_width = coordinates2pixels(1); //Used within drawtile();
 	
 	//Dragging
 	if(wpaddown & WPAD_BUTTON_A) {
@@ -71,7 +71,6 @@ void updateworld()
 		
 		world_grab_x -= floor(world_grab_x);
 	}
-	world_grabbed = wpadheld & WPAD_BUTTON_A;
 	
 	//Zooming towards a specific spot
 	if(wpaddown & WPAD_BUTTON_B) {
@@ -89,11 +88,13 @@ void updateworld()
 	
 	//If the user is holding the world then move the world so that the world_grab_x & y variables
 	//are always right under the cursor
+	world_grabbed = wpadheld & WPAD_BUTTON_A;
+	
 	if(world_grabbed)
 	{
 		float cursor_xcenter_distance = pixels2coordinates(cursor_x - SCREEN_XCENTER);
 		float cursor_ycenter_distance = pixels2coordinates(cursor_y - SCREEN_YCENTER);
-		
+
 		float newworld_x = world_grab_x - cursor_xcenter_distance;
 		float newworld_y = world_grab_y - cursor_ycenter_distance;
 		
@@ -108,8 +109,6 @@ void updateworld()
 		world_speed_y = newworld_y - world_y;
 		
 		world_speed_x -= (int)(world_speed_x);		
-
-
 		
 		world_x = newworld_x;
 		world_y = newworld_y;
@@ -167,22 +166,6 @@ void updateworld()
 }
 
 /**
- * Display all tiles as a map
- */
-void drawworld()
-{
-	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_FALSE);
-
-	struct tile* tile = firsttile;
-	while(tile != NULL)
-	{
-		drawtile(tile);
-			
-		tile = tile->nexttile;
-	}
-}
-
-/**
  * Draws a single tile onto the screen
  * Also changes the status from VISIBLE to 
  */
@@ -191,13 +174,13 @@ void drawtile(struct tile* tile)
 	if(tile->texture == NULL)
 		return;
 		
-	struct point topleft = world2screen(tile->top, tile->left);
-	struct point bottomright = world2screen(tile->bottom, tile->right);
+	struct point topleft = world2screen(tile->left, tile->top);
+	struct point bottomright = world2screen(tile->right, tile->bottom);
 	float width = bottomright.x - topleft.x;
 	float height = bottomright.y - topleft.y;
 	
 	DrawImg(topleft.x, topleft.y, width, height, tile->texture, tile->opacity);
-
+	
 	//Draw extra copies of this tile to the left and to the right
 	//Should only happed if the view is so zoomed out that the world can be seen multiple times
 	
@@ -227,9 +210,9 @@ inline float pixels2coordinates(float pixels)
 	return pixels / WORLD_SIZE_AT_ZOOM0 / powf(2, world_zoom);
 }
 
-struct point world2screen(float lattitude, float longitude) {
-	float xcenter_distance = coordinates2pixels(longitude - world_x);
-	float ycenter_distance = coordinates2pixels(lattitude - world_y);
+struct point world2screen(float relative_x, float relative_y) {
+	float xcenter_distance = coordinates2pixels(relative_x - world_x);
+	float ycenter_distance = coordinates2pixels(relative_y - world_y);
 	
 	struct point screen;
 	screen.x = SCREEN_XCENTER + xcenter_distance;
@@ -246,4 +229,34 @@ struct point screen2world(float x, float y)
 	world.x = world_x + pixels2coordinates(xcenter_distance);
 	world.y = world_y + pixels2coordinates(ycenter_distance);
 	return world;
+}
+
+/**
+ * Display all tiles as a map
+ */
+void drawworld()
+{
+	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_FALSE);
+	
+	int current_zoom, i;
+	for(current_zoom = MIN_ZOOM; current_zoom <= MAX_ZOOM; current_zoom++)
+	{
+		for(i = 0; i < NUM_TILES; i++)
+		{
+			if(tiles[i] != NULL && tiles[i]->zoom == current_zoom && tiles[i]->type != tiletype_current)
+				drawtile(tiles[i]);
+		}
+	}
+	
+	for(current_zoom = MIN_ZOOM; current_zoom <= MAX_ZOOM; current_zoom++)
+	{
+		for(i = 0; i < NUM_TILES; i++)
+		{
+			if(tiles[i] != NULL && tiles[i]->zoom == current_zoom && tiles[i]->type == tiletype_current)
+				drawtile(tiles[i]);
+		}
+	}
+	
+	if(downloading_tile != NULL)
+		drawtile(downloading_tile);
 }

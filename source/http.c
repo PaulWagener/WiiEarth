@@ -126,15 +126,9 @@ struct block read_message(s32 connection)
 	return buffer;
 }
 
-static mutex_t mutexhttp = -1;
-
-void initializedownload()
-{
-	LWP_MutexInit(&mutexhttp, false);
-}
-
 /**
- *
+ * Downloads the contents of a URL to memory
+ * This method is not threadsafe (because networking is not threadsafe on the Wii)
  */
 struct block downloadfile(const char *url)
 {
@@ -178,15 +172,10 @@ struct block downloadfile(const char *url)
 	}
 
 
-	//Start of threadsafe section
-	while(LWP_MutexLock(mutexhttp) < 0)
-		usleep(100);
-		
 	s32 connection = server_connect(ipaddress, 80);
 	
 	if(connection < 0) {
 		printf("Error establishing connection");
-		LWP_MutexUnlock(mutexhttp);
 		return emptyblock;
 	}
 	
@@ -199,11 +188,6 @@ struct block downloadfile(const char *url)
 	send_message(connection, header);
 	struct block response = read_message(connection);
 	net_close(connection);
-
-	//End of threadsafe section
-	LWP_MutexUnlock(mutexhttp);
-	
-	
 
 	//Search for the 4-character sequence \r\n\r\n in the response which signals the start of the http payload (file)
 	unsigned char *filestart = NULL;

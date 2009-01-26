@@ -6,13 +6,10 @@
 #include <ogcsys.h>
 #include <string.h>
 
-#include <ogc/mutex.h>
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
-
 
 #include "dns.h"
 
@@ -27,7 +24,6 @@ struct block
 
 extern const struct block emptyblock;
 
-void initializedownload();
 struct block downloadfile(const char *url);
 
 #endif /* _HTTP_H_ */
