@@ -63,7 +63,7 @@ void updateworld()
 	world_width = coordinates2pixels(1); //Used within drawtile();
 	
 	//Dragging
-	if(wpaddown & WPAD_BUTTON_A) {
+	if(wpaddown & WPAD_BUTTON_B) {
 		stopslide();
 		struct point cursorworld = screen2world(cursor_x, cursor_y);
 		world_grab_x = cursorworld.x;
@@ -73,7 +73,7 @@ void updateworld()
 	}
 	
 	//Zooming towards a specific spot
-	if(wpaddown & WPAD_BUTTON_B) {
+	if(wpaddown & WPAD_BUTTON_A) {
 		stopslide();
 		if(world_zoom_target < MAX_ZOOM) world_zoom_target++;
 		
@@ -88,7 +88,7 @@ void updateworld()
 	
 	//If the user is holding the world then move the world so that the world_grab_x & y variables
 	//are always right under the cursor
-	world_grabbed = wpadheld & WPAD_BUTTON_A;
+	world_grabbed = wpadheld & WPAD_BUTTON_B;
 	
 	if(world_grabbed)
 	{
