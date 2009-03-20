@@ -3,7 +3,7 @@
 
 #include "http.h"
 
-enum tiletype {OSM, LIVE_HYBRID, LIVE_MAP};
+enum tiletype {OSM, LIVE_SATELLITE, LIVE_MAP, GOOGLE_MAP, GOOGLE_SATELLITE, GOOGLE_TERRAIN};
 
 extern enum tiletype tiletype_current;
 

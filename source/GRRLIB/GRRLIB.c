@@ -72,11 +72,15 @@ u8* GRRLIB_LoadTexture(const unsigned char* my_png) {
 		
     int pngreturncode = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, my_texture, 255);
 	PNGU_ReleaseImageContext (ctx);
-	
-	if(pngreturncode != PNGU_OK) {
+												
+											//Googles 'overquota' image is 100x100 pixels,
+											//TODO: fix nasty workaround
+	if(pngreturncode != PNGU_OK || (imgProp.imgWidth == 100 && imgProp.imgHeight == 100)) {
 		free(my_texture);
 		return NULL;
 	}
+	
+	
     DCFlushRange (my_texture, imgProp.imgWidth * imgProp.imgHeight * 4);
 	return my_texture;
 }

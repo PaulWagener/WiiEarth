@@ -20,14 +20,28 @@ u8* get_tiletype_texture(enum tiletype tiletype)
 		case OSM:
 			texture = GRRLIB_LoadTexture(openstreetmap);
 			break;
-			
-		case LIVE_HYBRID:
-			texture = GRRLIB_LoadTexture(live_hybrid);
-			break;
-			
+
+
 		case LIVE_MAP:
 			texture = GRRLIB_LoadTexture(live_maps);
 			break;
+						
+		case LIVE_SATELLITE:
+			texture = GRRLIB_LoadTexture(live_satellite);
+			break;
+			
+		case GOOGLE_MAP:
+			texture = GRRLIB_LoadTexture(google_maps);
+			break;
+			
+		case GOOGLE_SATELLITE:
+			texture = GRRLIB_LoadTexture(google_satellite);
+			break;
+			
+		case GOOGLE_TERRAIN:
+			texture = GRRLIB_LoadTexture(google_terrain);
+			break;
+
 	}
 	return texture;
 }

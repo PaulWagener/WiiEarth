@@ -20,7 +20,6 @@ struct tile* downloading_tile = NULL;
  */
 void updatetiles()
 {
-	
 	//Fade new tiles in
 	int i;
 	for(i = 0; i < NUM_TILES; i++)
@@ -110,19 +109,31 @@ void updatetiles()
 		switch(tiletype_current)
 		{
 			case OSM:
-				tiletype_current = LIVE_HYBRID;
-				break;
-				
-			case LIVE_HYBRID:
 				tiletype_current = LIVE_MAP;
 				break;
 				
 			case LIVE_MAP:
+				tiletype_current = LIVE_SATELLITE;
+				break;
+				
+			case LIVE_SATELLITE:
+				tiletype_current = GOOGLE_MAP;
+				break;
+				
+			case GOOGLE_MAP:
+				tiletype_current = GOOGLE_SATELLITE;
+				break;
+				
+			case GOOGLE_SATELLITE:
+				tiletype_current = GOOGLE_TERRAIN;
+				break;
+				
+			case GOOGLE_TERRAIN:
 				tiletype_current = OSM;
 				break;
 		}
 		
-		/*
+		
 		//Delete all current tiles
 		for(i = 0; i < NUM_TILES; i++)
 		{
@@ -132,7 +143,7 @@ void updatetiles()
 				tiles[i] = NULL;
 			}
 		}
-		*/
+		
 	}
 	
 }
@@ -239,6 +250,42 @@ u8* getlivemaptile(char rcode[], int zoom)
 		return pngurl2texture(url);
 }
 
+u8* getgooglemaptile(float lattitude, float longitude, int zoom)
+{
+	char url[300];
+
+	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=map&format=png32&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhSwnARdfbvgucbJu97QqwD5qLHOehSEXH_VJ226yc_On_LJtR2vbVpdEA", lattitude, longitude, zoom);
+
+	if(result < 0)
+		return NULL;
+
+	return pngurl2texture(url);
+}
+
+u8* getgooglesatellitetile(float lattitude, float longitude, int zoom)
+{
+	char url[300];
+
+	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=hybrid&format=jpg&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhTLp7rNJYmgRqV7WukaV0vQ79jYwRQBAhP9xmVSeNw0BbDVzVYWf7NurA", lattitude, longitude, zoom);
+
+	if(result < 0)
+		return NULL;
+
+	return jpegurl2texture(url);
+}
+
+u8* getgoogleterraintile(float lattitude, float longitude, int zoom)
+{
+	char url[300];
+
+	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=terrain&format=png32&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhTLp7rNJYmgRqV7WukaV0vQ79jYwRQBAhP9xmVSeNw0BbDVzVYWf7NurA", lattitude, longitude, zoom);
+
+	if(result < 0)
+		return NULL;
+
+	return pngurl2texture(url);
+}
+
 char* converttoquartercode(int x, int y, int zoom, char codes[])
 {
 	char *code = malloc(zoom + 1);
@@ -325,6 +372,19 @@ void* downloadtile(void* tilepointer)
 	if(tile == NULL)
 		return NULL;
 
+	float longitude, lattitude;
+	
+	if(tile->type == GOOGLE_MAP || tile->type == GOOGLE_SATELLITE || tile->type == GOOGLE_TERRAIN) {
+		const float PI = 3.1415f;
+
+		float centerx = tile->left + (tile->right - tile->left) / 2;
+		float centery = tile->top + (tile->bottom - tile->top) / 2;
+		longitude = centerx * 360.0 - 180.0;
+		float lattitude_rad = atan(sinh( PI * -(centery*2 - 1)));
+		lattitude = lattitude_rad * 180.0 / PI;
+	}
+	
+
 	//Downloads the tile by calling the appropriate API
 	switch(tile->type)
 	{
@@ -332,7 +392,7 @@ void* downloadtile(void* tilepointer)
 			tile->texture = getosmtile(tile->zoom, tile->x, tile->y);
 			break;
 			
-		case LIVE_HYBRID:
+		case LIVE_SATELLITE:
 		{
 			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "0123");
 			tile->texture = getlivehybridtile(code);
@@ -342,17 +402,26 @@ void* downloadtile(void* tilepointer)
 		case LIVE_MAP:
 		{
 			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "0123");
-			
-			
-			u8* texture = getlivemaptile(code, tile->zoom);
-			
-			if(tile == NULL)
-				exit(0);
-				
-			tile->texture = texture;
+			tile->texture = getlivemaptile(code, tile->zoom);
 			free(code);
 			break;
 		}
+		case GOOGLE_MAP:
+		{
+			tile->texture = getgooglemaptile(lattitude, longitude, tile->zoom);
+			break;
+		}		
+		case GOOGLE_SATELLITE:
+		{
+			tile->texture = getgooglesatellitetile(lattitude, longitude, tile->zoom);
+			break;
+		}
+		case GOOGLE_TERRAIN:
+		{
+			tile->texture = getgoogleterraintile(lattitude, longitude, tile->zoom);
+			break;
+		}
+		default: break;
 	}
 
 	//Delete the tile that is most out of view and replace it with the newly downloaded tile
