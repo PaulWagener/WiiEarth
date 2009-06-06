@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #include "http.h"
-#include "dns.h"
 #include "world.h"
 #include "input.h"
 #include "startscreen.h"
@@ -33,19 +32,24 @@ int main(){
 	SYS_SetPowerCallback(WiiPowerPressed);
 	WPAD_SetPowerButtonCallback(WiimotePowerPressed);
 	
- 
 	VIDEO_Init();
-	WPAD_Init();
 
-	startscreen();
+	if(CONF_GetAspectRatio())
+	{
+		SCREEN_WIDTH = 720;
+	} else {
+		SCREEN_WIDTH = 640;
+	}
 	
-	GRRLIB_InitVideo();
-	GRRLIB_Start();
-
-
+	
 	initializeinput();
 	initializeworld();
 	
+	GRRLIB_InitVideo();
+	GRRLIB_Start();
+	
+	startscreen();
+		
     while(1){
 		if(!fadeout)
 		{
@@ -58,21 +62,21 @@ int main(){
 		drawworld();
 		drawcursor();
 		drawoverlay();
-		
+
 		//When hitting home do a slow fade to black,
 		//if it is totally black do the actual exit
 		if (wpadheld & WPAD_BUTTON_HOME || HWButton) fadeout = true;
 		if(fadeout)
 		{
 			fadeout_opacity += 5;
-			if(fadeout_opacity >= 255) {
+			if(fadeout_opacity >= 270) {
 				if(HWButton)
 					SYS_ResetSystem(HWButton, 0, 0);
 					
 				return 0;
 			}
 				
-			GRRLIB_Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, fadeout_opacity << 24, true);
+			GRRLIB_Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, fadeout_opacity > 255 ? 255 << 24 : fadeout_opacity << 24, true);
 			
 		}
 		

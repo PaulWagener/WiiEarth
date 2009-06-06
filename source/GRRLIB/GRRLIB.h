@@ -16,6 +16,16 @@
 
 #include "../libpng/pngu/pngu.h"
 
+void GRRLIB_Widescreen(bool wd_on);
+
+typedef struct GRRLIB_texImg {
+    unsigned int w;         /**< width of the texture. */
+    unsigned int h;         /**< height of the texture. */
+    u8 *data;             /**< pointer to the texture data. */
+} GRRLIB_texImg;
+
+const GRRLIB_texImg empty_texture;
+
 extern Mtx GXmodelView2D;
 
 inline void GRRLIB_FillScreen(u32 color);
@@ -30,9 +40,9 @@ void GRRLIB_NGone(Vector v[],GXColor c[],long n);
 void GRRLIB_NGoneFilled(Vector v[],GXColor c[],long n);
 
 
-u8* GRRLIB_LoadTexture(const unsigned char* my_png);
-u8* GRRLIB_LoadTextureJPEG(const unsigned char* jpegdata, unsigned int jpegsize);
-inline void GRRLIB_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, u8 alphaF );
+GRRLIB_texImg GRRLIB_LoadTexture(const unsigned char* my_png);
+GRRLIB_texImg GRRLIB_LoadTextureJPEG(const unsigned char* jpegdata, unsigned int jpegsize);
+inline void GRRLIB_DrawImg(f32 xpos, f32 ypos, GRRLIB_texImg texture, float degrees, float scaleX, f32 scaleY, u8 alphaF );
 inline void GRRLIB_DrawTile(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, u8 alpha, f32 frame,f32 maxframe );
 inline void GRRLIB_DrawChar(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, f32 frame,f32 maxframe, GXColor c );
 

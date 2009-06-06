@@ -4,7 +4,7 @@ void initializeinput()
 {
 	WPAD_Init();
 	WPAD_SetDataFormat(0, WPAD_FMT_BTNS_ACC_IR);
-	WPAD_SetVRes(0, 640, 480);
+	WPAD_SetVRes(0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	cursor_x = 0;
 	cursor_y = 0;
@@ -45,9 +45,9 @@ void drawcursor()
 {
 	if(cursor_visible)
 	{
-		u8 *cursortexture = world_grabbed ? tex_cursor_grab : tex_cursor_hand;
+		GRRLIB_texImg cursortexture = world_grabbed ? tex_cursor_grab : tex_cursor_hand;
 	
-		GRRLIB_DrawImg(cursor_x - (CURSOR_WIDTH / 2), cursor_y - (CURSOR_HEIGHT / 2), CURSOR_WIDTH, CURSOR_HEIGHT, cursortexture, cursor_rot, 1, 1, CURSOR_OPACITY );
+		GRRLIB_DrawImg(cursor_x - (CURSOR_WIDTH / 2), cursor_y - (CURSOR_HEIGHT / 2), cursortexture, cursor_rot, 1, 1, CURSOR_OPACITY);
 	}
 
 

@@ -5,7 +5,6 @@
 #include <wiiuse/wpad.h>
 #include "GRRLIB/GRRLIB.h"
 
-
 #include "gfx/cursor_grab.h"
 #include "gfx/cursor_hand.h"
 #include "world.h"
@@ -18,18 +17,18 @@ bool cursor_visible;
 u32 wpaddown;
 u32 wpadheld;
 
-#define SCREEN_WIDTH 640
+int SCREEN_WIDTH;
 #define SCREEN_HEIGHT 480
 
-#define SCREEN_XCENTER 320
-#define SCREEN_YCENTER 240
+#define SCREEN_XCENTER SCREEN_WIDTH / 2
+#define SCREEN_YCENTER SCREEN_HEIGHT / 2  
 
 #define CURSOR_WIDTH 96
 #define CURSOR_HEIGHT 96
 #define CURSOR_OPACITY 255
 
-u8 *tex_cursor_grab;
-u8 *tex_cursor_hand;
+GRRLIB_texImg tex_cursor_grab;
+GRRLIB_texImg tex_cursor_hand;
 
 void initializeinput();
 void updateinput();

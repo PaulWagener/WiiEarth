@@ -9,7 +9,6 @@
 #ifndef __JPGLIB__
 #define __JPGLIB__
 
-#include "jpeglib.h"
 
 typedef struct {
     char           *inbuffer;

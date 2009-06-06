@@ -17,7 +17,7 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source/gfx source/gfx/cursors source/GRRLIB source/GRRLIB/fonts source/libpng source/libpng/pngu source/jpeg
+SOURCES		:=	source source/gfx source/gfx/cursors source/GRRLIB source/GRRLIB/fonts source/libpng source/libpng/pngu source/libjpeg
 DATA		:=	data  
 INCLUDES	:=
 
@@ -28,12 +28,12 @@ INCLUDES	:=
 CFLAGS	= -g -mrvl -Wall $(MACHDEP) $(INCLUDE)
 CXXFLAGS	=	$(CFLAGS)
 
-LDFLAGS	=	-g $(MACHDEP) -mrvl -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	-g $(MACHDEP) -mrvl -Wl,-Map,$(notdir $@).map 
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ljpeg -lpng -lz -lwiiuse -lbte -logc -lm
+LIBS	:=	-ljpeg -lpng -lz -lwiiuse -lbte -ldb -logc -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

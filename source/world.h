@@ -1,7 +1,6 @@
 #ifndef _WORLD_H_
 #define _WORLD_H_
 
-#include <math.h>
 #include "tile.h"
 #include "input.h"
 
@@ -29,8 +28,6 @@ struct point {
 	float x;
 	float y;
 };
-
-u8 *tex_loading;
 
 //World_x and world_y represent the point that the map should be centered on
 //It is a simple coordinate system with the topleft of the map on 0.0, 0.0

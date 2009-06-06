@@ -2,14 +2,20 @@
 #define _TILE_H_
 
 #include "http.h"
+#include "world.h"
+#include "GRRLIB/GRRLIB.h"
 
-enum tiletype {OSM, LIVE_SATELLITE, LIVE_MAP, GOOGLE_MAP, GOOGLE_SATELLITE, GOOGLE_TERRAIN};
+enum tile_source {OSM, LIVE_SATELLITE, LIVE_MAP, GOOGLE_MAP, GOOGLE_SATELLITE, GOOGLE_TERRAIN};
 
-extern enum tiletype tiletype_current;
+enum tile_status {INITIALIZED, DOWNLOADING, VISIBLE};
+
+extern enum tile_source current_tilesource;
 
 #define NUM_TILES 9
 struct tile* tiles[NUM_TILES];
-struct tile* downloading_tile;
+
+
+struct tile* zoom1_tiles[4];
 
 //A tile is an image of a piece of the earth
 struct tile {
@@ -27,11 +33,13 @@ struct tile {
 	int zoom;
 	
 	//Texture in 4x4RGBA8 format
-	u8 *texture;
+	GRRLIB_texImg texture;
 	
 	int opacity; //Between 0 and 255
 	
-	enum tiletype type;
+	enum tile_source source;
+	
+	enum tile_status status;
 };
 
 void updatetiles();

@@ -2,12 +2,13 @@
 #include <wiiuse/wpad.h>
 #include "http.h"
 
-static u32 *xfb[2] = { NULL, NULL };
-static GXRModeObj *vmode;
-
 //Start up console
 void initialize() {
+	static GXRModeObj *vmode;
+	static u32 *xfb[2] = { NULL, NULL };
+	
 	vmode = VIDEO_GetPreferredMode(NULL);
+
 	xfb[0] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(vmode));
 	xfb[1] = MEM_K0_TO_K1(SYS_AllocateFramebuffer(vmode));
 	console_init(xfb[0],20,20,vmode->fbWidth,vmode->xfbHeight,vmode->fbWidth*VI_DISPLAY_PIX_SZ);
@@ -22,9 +23,9 @@ void initialize() {
 void startscreen()
 {
 	initialize();
-	
+
 	printf("\n\n\n\n\n\n\n\n");
-	printf("      Wii Earth 2.1\n");
+	printf("      Wii Earth 2.2\n");
 	printf("         Images are from openstreetmap.org, maps.google.com and maps.live.com\n\n");
 	
     printf("      Waiting for network to initialize...");

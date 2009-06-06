@@ -6,8 +6,10 @@
 
 #include "GRRLIB.h"
 #include "../libpng/pngu/pngu.h"
-#include "../jpeg/jpgogc.h"
+#include "../libjpeg/jpgogc.h"
 #define DEFAULT_FIFO_SIZE (256 * 1024)
+
+const GRRLIB_texImg empty_texture = {0,0,NULL};
 
  u32 fb=0;
  static void *xfb[2] = { NULL, NULL};
@@ -56,7 +58,7 @@ void GRRLIB_NGoneFilled(Vector v[],GXColor c[],long n){
 	GRRLIB_GXEngine(v,c,n,GX_TRIANGLEFAN);
 }
 
-u8* GRRLIB_LoadTexture(const unsigned char* my_png) {
+GRRLIB_texImg GRRLIB_LoadTexture(const unsigned char* my_png) {
    PNGUPROP imgProp;
    IMGCTX ctx;
    void *my_texture;
@@ -67,22 +69,25 @@ u8* GRRLIB_LoadTexture(const unsigned char* my_png) {
 	
 	if(my_texture == NULL) {
 		PNGU_ReleaseImageContext (ctx);
-		return NULL;
+		return empty_texture;
 	}
 		
+		
+	GRRLIB_texImg texture;
+	texture.w = imgProp.imgWidth;
+	texture.h = imgProp.imgHeight;
+	texture.data = my_texture;
     int pngreturncode = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, my_texture, 255);
 	PNGU_ReleaseImageContext (ctx);
 												
-											//Googles 'overquota' image is 100x100 pixels,
-											//TODO: fix nasty workaround
-	if(pngreturncode != PNGU_OK || (imgProp.imgWidth == 100 && imgProp.imgHeight == 100)) {
+	if(pngreturncode != PNGU_OK) {
 		free(my_texture);
-		return NULL;
+		return empty_texture;
 	}
 	
 	
     DCFlushRange (my_texture, imgProp.imgWidth * imgProp.imgHeight * 4);
-	return my_texture;
+	return texture;
 }
 
 u8 to255(int value)
@@ -95,7 +100,7 @@ u8 to255(int value)
 	return value;
 }
 
-u8* GRRLIB_LoadTextureJPEG(const unsigned char* jpegdata, unsigned int jpegsize) {
+GRRLIB_texImg GRRLIB_LoadTextureJPEG(const unsigned char* jpegdata, unsigned int jpegsize) {
 	//Decompress JPEG
 	JPEGIMG         jpeg;
     memset(&jpeg, 0, sizeof(JPEGIMG));
@@ -107,23 +112,26 @@ u8* GRRLIB_LoadTextureJPEG(const unsigned char* jpegdata, unsigned int jpegsize)
 	
 	u8* input = (u8*)jpeg.outbuffer;
 	
-	int width = jpeg.width;
-	int height = jpeg.height;
-		
-	u8 *texture = memalign(32, width * height * 4);
 	
-	if(texture == NULL)
-		return NULL;
+	GRRLIB_texImg texture;
+	texture.w = jpeg.width;
+	texture.h = jpeg.height;
+
+	
+	texture.data = memalign(32, texture.w * texture.h * 4);
+	
+	if(texture.data == NULL)
+		return empty_texture;
 		
 	//Convert the YCbYCr jpeg outbutbuffer to 4x4 RGBA8
 	u32 x, y, x1, y1, x2, y2, block = 0;
 	
 	//Iterate through all 4x4 blocks
-	for(y1 = 0; y1 < height; y1 += 4)
+	for(y1 = 0; y1 < texture.h; y1 += 4)
 	{
-		for(x1 = 0; x1 < width; x1 += 4)
+		for(x1 = 0; x1 < texture.w; x1 += 4)
 		{
-			u8 *ar_block = texture + block * 64;
+			u8 *ar_block = texture.data + block * 64;
 			u8 *gb_block = ar_block + 32;
 			
 			//Iterate through all pixelpairs within block
@@ -137,7 +145,7 @@ u8* GRRLIB_LoadTextureJPEG(const unsigned char* jpegdata, unsigned int jpegsize)
 					u8 *ar_blockpixel = ar_block + (y2 * 4 + x2) * 2;
 					u8 *gb_blockpixel = gb_block + (y2 * 4 + x2) * 2;
 					
-					u8 *pixel = input + (y * width + x) * 2;
+					u8 *pixel = input + (y * texture.w + x) * 2;
 					
 					//YCbYCr to RGB
 					int r = 1.371f * (pixel[3] - 128); 
@@ -168,14 +176,17 @@ u8* GRRLIB_LoadTextureJPEG(const unsigned char* jpegdata, unsigned int jpegsize)
 	}
 	
 	free(jpeg.outbuffer);
-	DCFlushRange (texture, width * height * 4);
-
+	DCFlushRange (texture.data, texture.w * texture.h * 4);
+	
 	return texture;
 }
 
-inline void GRRLIB_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, u8 alpha ){
+inline void GRRLIB_DrawImg(f32 xpos, f32 ypos, GRRLIB_texImg texture, float degrees, float scaleX, f32 scaleY, u8 alpha ){
    GXTexObj texObj;
 
+	int width = texture.w;
+	int height = texture.h;
+	u8 *data = texture.data;
 	
 	GX_InitTexObj(&texObj, data, width,height, GX_TF_RGBA8,GX_CLAMP, GX_CLAMP,GX_FALSE);
 	//GX_InitTexObjLOD(&texObj, GX_NEAR, GX_NEAR, 0.0f, 0.0f, 0.0f, 0, 0, GX_ANISO_1);
@@ -360,12 +371,28 @@ GXColor GRRLIB_Splitu32(u32 color){
 }
 
 
+void GRRLIB_Widescreen(bool wd_on) {
+	// This is meant to fix widescreen TVs
+	if (wd_on) {
+		rmode->viWidth = 678; 
+		rmode->viXOrigin = (VI_MAX_WIDTH_PAL - 678) / 2;
+	}
+	else {
+		rmode->viWidth = 640; 
+		rmode->viXOrigin = (VI_MAX_WIDTH_PAL - 640) / 2;
+	}
 
+    VIDEO_Configure (rmode);
+}
 
 //********************************************************************************************
 void GRRLIB_InitVideo () {
 
 	rmode = VIDEO_GetPreferredMode(NULL);
+	
+	if(CONF_GetAspectRatio())
+		rmode->viWidth = 678;
+
 	VIDEO_Configure (rmode);
 	xfb[0] = (u32 *)MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
 	xfb[1] = (u32 *)MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
@@ -375,7 +402,6 @@ void GRRLIB_InitVideo () {
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
 	if(rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
-
 
 	gp_fifo = (u8 *) memalign(32,DEFAULT_FIFO_SIZE);
 }
@@ -435,7 +461,11 @@ void GRRLIB_Start(){
 	guMtxTransApply (GXmodelView2D, GXmodelView2D, 0.0F, 0.0F, -50.0F);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
 
-	guOrtho(perspective,0,479,0,639,0,300);
+	if(CONF_GetAspectRatio())
+		guOrtho(perspective,0,479,0,719,0,300);
+	else
+		guOrtho(perspective,0,479,0,639,0,300);
+
 	GX_LoadProjectionMtx(perspective, GX_ORTHOGRAPHIC);
 
 	GX_SetViewport(0,0,rmode->fbWidth,rmode->efbHeight,0,1);

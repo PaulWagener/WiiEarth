@@ -1,4 +1,48 @@
 #include "http.h"
+/*  http -- http convenience functions
+
+    Copyright (C) 2008 bushing
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, version 2.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include <malloc.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#include <ogcsys.h>
+#include <network.h>
+#include <ogc/lwp_watchdog.h>
+
+#include <sys/types.h>
+#include <sys/errno.h>
+#include <fcntl.h>
+#include "http.h"
+
+void debug_printf(const char *fmt, ...) {}
+
+char *http_host;
+u16 http_port;
+char *http_path;
+u32 http_max_size;
+
+http_res result;
+u32 http_status;
+u32 content_length;
+u8 *http_data;
+
 
 /**
  * Emptyblock is a statically defined variable for functions to return if they are unable
@@ -6,229 +50,376 @@
  */
 const struct block emptyblock = {0, NULL};
 
-//The maximum amount of bytes to send per net_write() call
-#define NET_BUFFER_SIZE 1024
-
-// Write our message to the server
-static s32 send_message(s32 server, char *msg) {
-	s32 bytes_transferred = 0;
-    s32 remaining = strlen(msg);
-    while (remaining) {
-        if ((bytes_transferred = net_write(server, msg, remaining > NET_BUFFER_SIZE ? NET_BUFFER_SIZE : remaining)) > 0) {
-            remaining -= bytes_transferred;
-			usleep (20 * 1000);
-        } else if (bytes_transferred < 0) {
-            return bytes_transferred;
-        } else {
-            return -ENODATA;
-        }
-    }
-	return 0;
-}
-
-/**
- * Connect to a remote server via TCP on a specified port
- *
- * @param u32 ip address of the server to connect to
- * @param u32 the port to connect to on the server
- * @return s32 The connection to the server (negative number if connection could not be established)
- */
-static s32 server_connect(u32 ipaddress, u32 socket_port) {
-	//Initialize socket
-	s32 connection = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-    if (connection < 0) return connection;
-
-	struct sockaddr_in connect_addr;
-	memset(&connect_addr, 0, sizeof(connect_addr));
-	connect_addr.sin_family = AF_INET;
-	connect_addr.sin_port = socket_port;
-	connect_addr.sin_addr.s_addr= ipaddress;
-	
-	//Attemt to open the socket
-	if (net_connect(connection, (struct sockaddr*)&connect_addr, sizeof(connect_addr)) == -1) {
-		net_close(connection);
-		return -1;
-	}
-	return connection;
-}
-
-//The amount of memory in bytes reserved initially to store the HTTP response in
-//Be careful in increasing this number, reading from a socket on the Wii 
-//will fail if you request more than 20k or so
-#define HTTP_BUFFER_SIZE 1024 * 5
-
-//The amount of memory the buffer should expanded with if the buffer is full
-#define HTTP_BUFFER_GROWTH 1024 * 5
-
-/**
- * This function reads all the data from a connection into a buffer which it returns.
- * It will return an empty buffer if something doesn't go as planned
- *
- * @param s32 connection The connection identifier to suck the response out of
- * @return block A 'block' struct (see http.h) in which the buffer is located
- */
-struct block read_message(s32 connection)
-{
-	//Create a block of memory to put in the response
-	struct block buffer;
-	buffer.data = malloc(HTTP_BUFFER_SIZE);
-	buffer.size = HTTP_BUFFER_SIZE;
-
-	if(buffer.data == NULL) {
-		return emptyblock;
-	}
-	
-	//The offset variable always points to the first byte of memory that is free in the buffer
-	u32 offset = 0;
-	
-	while(1)
-	{
-		//Fill the buffer with a new batch of bytes from the connection,
-		//starting from where we left of in the buffer till the end of the buffer
-		s32 bytes_read = net_read(connection, buffer.data + offset, buffer.size - offset);
-		
-		//Anything below 0 is an error in the connection
-		if(bytes_read < 0)
-		{
-			printf("Connection error from net_read()  Errorcode: %i\n", bytes_read);
-			return emptyblock;
-		}
-		
-		//No more bytes were read into the buffer,
-		//we assume this means the HTTP response is done
-		if(bytes_read == 0)
-		{
-			break;
-		}
-		
-		offset += bytes_read;
-		
-		//Check if we have enough buffer left over,
-		//if not expand it with an additional HTTP_BUFFER_GROWTH worth of bytes
-		if(offset >= buffer.size)
-		{
-			buffer.size += HTTP_BUFFER_GROWTH;
-			buffer.data = realloc(buffer.data, buffer.size);
-			
-			if(buffer.data == NULL)
-			{
-				return emptyblock;
-			}
-		}
-	}
-
-	//At the end of above loop offset should be precisely the amount of bytes that were read from the connection
-	buffer.size = offset;
-		
-	//Shrink the size of the buffer so the data fits exactly in it
-	realloc(buffer.data, buffer.size);
-	
-	return buffer;
-}
-
 /**
  * Downloads the contents of a URL to memory
  * This method is not threadsafe (because networking is not threadsafe on the Wii)
  */
 struct block downloadfile(const char *url)
 {
-	//Check if the url starts with "http://", if not it is not considered a valid url
-	if(strncmp(url, "http://", strlen("http://")) != 0)
-	{
-		printf("URL '%s' doesn't start with 'http://'\n", url);
+	u8 *outbuf;
+	u32 outlen, http_status;
+	int retval;
+	
+	retval = http_request(url, 1 << 31);
+	if(!retval)
 		return emptyblock;
-	}
-	
-	//Locate the path part of the url by searching for '/' past "http://"
-	char *path = strchr(url + strlen("http://"), '/');
-	
-	//At the very least the url has to end with '/', ending with just a domain is invalid
-	if(path == NULL)
-	{
-		printf("URL '%s' has no PATH part\n", url);
-		return emptyblock;
-	}
-	
-	//Extract the domain part out of the url
-	int domainlength = path - url - strlen("http://");
-	
-	if(domainlength == 0)
-	{
-		printf("No domain part in URL '%s'\n", url);
-		return emptyblock;
-	}
-	
-	char domain[domainlength + 1];
-	strncpy(domain, url + strlen("http://"), domainlength);
-	domain[domainlength] = '\0';
-	
-	//Parsing of the URL is done, start making an actual connection
-	u32 ipaddress = getipbynamecached(domain);
-	
-	if(ipaddress == 0)
-	{
-		printf("domain %s could not be resolved", domain);
-		return emptyblock;
+		
+	http_get_result(&http_status, &outbuf, &outlen); 
+	struct block b;
+	b.data = outbuf;
+	b.size = outlen;
+	return b;
+}
+
+s32 tcp_socket (void) {
+	s32 s, res;
+
+	s = net_socket (PF_INET, SOCK_STREAM, 0);
+	if (s < 0) {
+		debug_printf ("net_socket failed: %d\n", s);
+		return s;
 	}
 
-
-	s32 connection = server_connect(ipaddress, 80);
-	
-	if(connection < 0) {
-		printf("Error establishing connection");
-		return emptyblock;
+	res = net_fcntl (s, F_GETFL, 0);
+	if (res < 0) {
+		debug_printf ("F_GETFL failed: %d\n", res);
+		net_close (s);
+		return res;
 	}
+
+	res = net_fcntl (s, F_SETFL, res | 4);
+	if (res < 0) {
+		debug_printf ("F_SETFL failed: %d\n", res);
+		net_close (s);
+		return res;
+	}
+
+	return s;
+}
+
+s32 tcp_connect (char *host, const u16 port) {
+	struct sockaddr_in sa;
+	s32 s, res;
+	s64 t;
+
+	struct hostent *hp = net_gethostbyname(host);
 	
-	//Form a nice request header to send to the webserver
-	char* headerformat = "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: WiiEarthh 1.0\r\n\r\n";;
-	char header[strlen(headerformat) + strlen(domain) + strlen(path)];
-	sprintf(header, headerformat, path, domain);
+	if (!hp || !(hp->h_addrtype == PF_INET)) {
+		debug_printf ("net_gethostbyname failed: %d\n", errno);
+		return errno;
+	}
 
-	//Do the request and get the response
-	send_message(connection, header);
-	struct block response = read_message(connection);
-	net_close(connection);
+	s = tcp_socket ();
+	if (s < 0)
+		return s;
 
-	//Search for the 4-character sequence \r\n\r\n in the response which signals the start of the http payload (file)
-	unsigned char *filestart = NULL;
-	u32 filesize = 0;
-	int i;
-	for(i = 3; i < response.size; i++)
-	{
-		if(response.data[i] == '\n' &&
-			response.data[i-1] == '\r' &&
-			response.data[i-2] == '\n' &&
-			response.data[i-3] == '\r')
-		{
-			filestart = response.data + i + 1;
-			filesize = response.size - i - 1;
+	memset (&sa, 0, sizeof (struct sockaddr_in));
+	sa.sin_family= PF_INET;
+	sa.sin_len = sizeof (struct sockaddr_in);
+	sa.sin_port= htons (port);
+	memcpy ((char *) &sa.sin_addr, hp->h_addr_list[0], hp->h_length);
+	
+
+	t = gettime ();
+	while (true) {
+		if (ticks_to_millisecs (diff_ticks (t, gettime ())) >
+				TCP_CONNECT_TIMEOUT) {
+			debug_printf ("tcp_connect timeout\n");
+			net_close (s);
+
+			return -ETIMEDOUT;
+		}
+
+		res = net_connect (s, (struct sockaddr *) &sa,
+							sizeof (struct sockaddr_in));
+
+		if (res < 0) {
+			if (res == -EISCONN)
+				break;
+
+			if (res == -EINPROGRESS || res == -EALREADY) {
+				usleep (20 * 1000);
+
+				continue;
+			}
+
+			debug_printf ("net_connect failed: %d\n", res);
+			net_close (s);
+
+			return res;
+		}
+
+		break;
+	}
+
+	return s;
+}
+
+char * tcp_readln (const s32 s, const u16 max_length, const u64 start_time, const u16 timeout) {
+	char *buf;
+	u16 c;
+	s32 res;
+	char *ret;
+
+	buf = (char *) malloc (max_length);
+
+	c = 0;
+	ret = NULL;
+	while (true) {
+		if (ticks_to_millisecs (diff_ticks (start_time, gettime ())) > timeout)
+			break;
+
+		res = net_read (s, &buf[c], 1);
+
+		if ((res == 0) || (res == -EAGAIN)) {
+			usleep (20 * 1000);
+
+			continue;
+		}
+
+		if (res < 0) {
+			debug_printf ("tcp_readln failed: %d\n", res);
+
 			break;
 		}
-	}
-	
-	if(filestart == NULL)
-	{
-		printf("HTTP Response was without a file\n");
-		free(response.data);
-		return emptyblock;
-	}
-	
-	//Copy the file part of the response into a new memoryblock to return
-	struct block file;
-	file.data = malloc(filesize);
-	file.size = filesize;
-	
-	if(file.data == NULL)
-	{
-		printf("No more memory to copy file from HTTP response\n");
-		free(response.data);
-		return emptyblock;
-	}
-	
-	memcpy(file.data, filestart, filesize);
 
-	//Dispose of the original response
-	free(response.data);
-	
-	return file;
+		if ((c > 0) && (buf[c - 1] == '\r') && (buf[c] == '\n')) {
+			if (c == 1) {
+				ret = strdup ("");
+
+				break;
+			}
+
+			ret = strndup (buf, c - 1);
+
+			break;
+		}
+
+		c++;
+
+		if (c == max_length)
+			break;
+	}
+
+	free (buf);
+	return ret;
 }
+
+bool tcp_read (const s32 s, u8 **buffer, const u32 length) {
+	u8 *p;
+	u32 step, left, block, received;
+	s64 t;
+	s32 res;
+
+	step = 0;
+	p = *buffer;
+	left = length;
+	received = 0;
+
+	t = gettime ();
+	while (left) {
+		if (ticks_to_millisecs (diff_ticks (t, gettime ())) >
+				TCP_BLOCK_RECV_TIMEOUT) {
+			debug_printf ("tcp_read timeout\n");
+
+			break;
+		}
+
+		block = left;
+		if (block > 2048)
+			block = 2048;
+
+		res = net_read (s, p, block);
+
+		if ((res == 0) || (res == -EAGAIN)) {
+			usleep (20 * 1000);
+			continue;
+		}
+
+		if (res < 0) {
+			debug_printf ("net_read failed: %d\n", res);
+
+			break;
+		}
+
+		received += res;
+		left -= res;
+		p += res;
+
+		if ((received / TCP_BLOCK_SIZE) > step) {
+			t = gettime ();
+			step++;
+		}
+	}
+
+	return left == 0;
+}
+
+bool tcp_write (const s32 s, const u8 *buffer, const u32 length) {
+	const u8 *p;
+	u32 step, left, block, sent;
+	s64 t;
+	s32 res;
+
+	step = 0;
+	p = buffer;
+	left = length;
+	sent = 0;
+
+	t = gettime ();
+	while (left) {
+		if (ticks_to_millisecs (diff_ticks (t, gettime ())) >
+				TCP_BLOCK_SEND_TIMEOUT) {
+
+			debug_printf ("tcp_write timeout\n");
+			break;
+		}
+
+		block = left;
+		if (block > 2048)
+			block = 2048;
+
+		res = net_write (s, p, block);
+
+		if ((res == 0) || (res == -56)) {
+			usleep (20 * 1000);
+			continue;
+		}
+
+		if (res < 0) {
+			debug_printf ("net_write failed: %d\n", res);
+			break;
+		}
+
+		sent += res;
+		left -= res;
+		p += res;
+
+		if ((sent / TCP_BLOCK_SIZE) > step) {
+			t = gettime ();
+			step++;
+		}
+	}
+
+	return left == 0;
+}
+bool http_split_url (char **host, char **path, const char *url) {
+	const char *p;
+	char *c;
+
+	if (strncasecmp (url, "http://", 7))
+		return false;
+
+	p = url + 7;
+	c = strchr (p, '/');
+
+	if (c[0] == 0)
+		return false;
+
+	*host = strndup (p, c - p);
+	*path = strdup (c);
+
+	return true;
+}
+
+bool http_request (const char *url, const u32 max_size) {
+	int linecount;
+	if (!http_split_url(&http_host, &http_path, url)) return false;
+
+	http_port = 80;
+	http_max_size = max_size;
+	
+	http_status = 404;
+	content_length = 0;
+	http_data = NULL;
+
+	int s = tcp_connect (http_host, http_port);
+//	debug_printf("tcp_connect(%s, %hu) = %d\n", http_host, http_port, s);
+	if (s < 0) {
+		result = HTTPR_ERR_CONNECT;
+		return false;
+	}
+
+	char *request = (char *) malloc (1024);
+	char *r = request;
+	r += sprintf (r, "GET %s HTTP/1.1\r\n", http_path);
+	r += sprintf (r, "Host: %s\r\n", http_host);
+	r += sprintf (r, "Cache-Control: no-cache\r\n\r\n");
+
+//	debug_printf("request = %s\n", request);
+
+	bool b = tcp_write (s, (u8 *) request, strlen (request));
+//	debug_printf("tcp_write returned %d\n", b);
+
+	free (request);
+	linecount = 0;
+
+	for (linecount=0; linecount < 32; linecount++) {
+	  char *line = tcp_readln (s, 0xff, gettime(), HTTP_TIMEOUT);
+//		debug_printf("tcp_readln returned %p (%s)\n", line, line?line:"(null)");
+		if (!line) {
+			http_status = 404;
+			result = HTTPR_ERR_REQUEST;
+			break;
+		}
+
+		if (strlen (line) < 1) {
+			free (line);
+			line = NULL;
+			break;
+		}
+
+		sscanf (line, "HTTP/1.%*u %u", &http_status);
+		sscanf (line, "Content-Length: %u", &content_length);
+
+		free (line);
+		line = NULL;
+
+	}
+//	debug_printf("content_length = %d, status = %d, linecount = %d\n", content_length, http_status, linecount);
+	if (linecount == 32 || !content_length) http_status = 404;
+	if (http_status != 200) {
+		result = HTTPR_ERR_STATUS;
+		net_close (s);
+		return false;
+	}
+	if (content_length > http_max_size) {
+		result = HTTPR_ERR_TOOBIG;
+		net_close (s);
+		return false;
+	}
+	http_data = (u8 *) malloc (content_length);
+	b = tcp_read (s, &http_data, content_length);
+	if (!b) {
+		free (http_data);
+		http_data = NULL;
+		result = HTTPR_ERR_RECEIVE;
+		net_close (s);
+		return false;
+	}
+
+	result = HTTPR_OK;
+
+	net_close (s);
+
+	return true;
+}
+
+bool http_get_result (u32 *_http_status, u8 **content, u32 *length) {
+	if (http_status) *_http_status = http_status;
+
+	if (result == HTTPR_OK) {
+		*content = http_data;
+		*length = content_length;
+
+	} else {
+		*content = NULL;
+		*length = 0;
+	}
+
+	free (http_host);
+	free (http_path);
+
+	return true;
+}
+

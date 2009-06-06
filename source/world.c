@@ -8,7 +8,7 @@ inline float pixels2coordinates(float pixels);
 /**
  * Wraps the GRRLIB_DrawImg function with parameters for width & height instead of scaleX & scaleY
  */
-void DrawImg(float x, float y, float width, float height, u8 data[], u8 opacity)
+void DrawImg(float x, float y, float width, float height, GRRLIB_texImg texture, u8 opacity)
 {
         float scaleX = width / TILE_WIDTH;
         float scaleY = height / TILE_HEIGHT;
@@ -17,7 +17,7 @@ void DrawImg(float x, float y, float width, float height, u8 data[], u8 opacity)
         float newX = x - (TILE_WIDTH / 2) + (width / 2);
         float newY = y - (TILE_HEIGHT / 2) + (height / 2); 
         
-        GRRLIB_DrawImg(newX, newY, TILE_WIDTH, TILE_HEIGHT, data, 0, scaleX, scaleY, opacity);
+        GRRLIB_DrawImg(newX, newY, texture, 0, scaleX, scaleY, opacity);
 } 
 
 void stopslide()
@@ -36,11 +36,15 @@ void initializeworld()
 	world_zooming_to = FALSE;
 	
 	int i;
-	for(i = 0; i < NUM_TILES; i++) {
+	for(i = 0; i < NUM_TILES; i++)
 		tiles[i] = NULL;
-	}
+
+	for(i = 0; i < 4; i++)
+		zoom1_tiles[i] = NULL;
+	
 }
 
+int rumble = 0;
 
 /**
  * Process controllerinput into a new mapview
@@ -48,15 +52,37 @@ void initializeworld()
 void updateworld()
 {
 	//Zooming
-	if((wpaddown & WPAD_BUTTON_PLUS) && world_zoom_target < MAX_ZOOM) {
-		stopslide();
-		world_zoom_target += 1;
+	if(wpaddown & WPAD_BUTTON_PLUS) {
+		if(world_zoom_target < MAX_ZOOM)
+		{
+			stopslide();
+			world_zoom_target += 1;
+		} else {
+			rumble = 1;
+		}
 	}
 	
-	if((wpaddown & WPAD_BUTTON_MINUS) && world_zoom_target > MIN_ZOOM) {
-		stopslide();
-		world_zoom_target -= 1;
+	if(wpaddown & WPAD_BUTTON_MINUS) {
+		if(world_zoom_target > MIN_ZOOM) {
+			stopslide();
+			world_zoom_target -= 1;
+		} else {
+			rumble = 1;
+		}
 	}
+	
+	if(rumble == 1)
+		WPAD_Rumble(WPAD_CHAN_0, 1);
+
+	if(rumble > 2) {
+		WPAD_Rumble(WPAD_CHAN_0, 0);
+		rumble = 0;
+	}
+		
+	if(rumble >= 1)
+		rumble++;		
+
+	
 	//Let world_zoom approach world_zoom_target
 	world_zoom = world_zoom + ((world_zoom_target - world_zoom) / 10);
 	
@@ -75,7 +101,11 @@ void updateworld()
 	//Zooming towards a specific spot
 	if(wpaddown & WPAD_BUTTON_A) {
 		stopslide();
-		if(world_zoom_target < MAX_ZOOM) world_zoom_target++;
+		if(world_zoom_target < MAX_ZOOM)
+			world_zoom_target++;
+		else
+			rumble = 1;
+		
 		
 		struct point cursorworld = screen2world(cursor_x, cursor_y);
 		world_zoomto_x = cursorworld.x;
@@ -171,7 +201,7 @@ void updateworld()
  */
 void drawtile(struct tile* tile)
 {
-	if(tile->texture == NULL)
+	if(tile->texture.data == NULL)
 		return;
 		
 	struct point topleft = world2screen(tile->left, tile->top);
@@ -238,25 +268,23 @@ void drawworld()
 {
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_FALSE);
 	
-	int current_zoom, i;
-	for(current_zoom = MIN_ZOOM; current_zoom <= MAX_ZOOM; current_zoom++)
+	int i_zoom, i;
+	
+	for(i = 0; i < 4; i++)
 	{
-		for(i = 0; i < NUM_TILES; i++)
-		{
-			if(tiles[i] != NULL && tiles[i]->zoom == current_zoom && tiles[i]->type != tiletype_current)
-				drawtile(tiles[i]);
+		if(zoom1_tiles[i] != NULL) {
+			drawtile(zoom1_tiles[i]);
 		}
 	}
 	
-	for(current_zoom = MIN_ZOOM; current_zoom <= MAX_ZOOM; current_zoom++)
+	for(i_zoom = 0; i_zoom <= MAX_ZOOM; i_zoom++)
 	{
 		for(i = 0; i < NUM_TILES; i++)
 		{
-			if(tiles[i] != NULL && tiles[i]->zoom == current_zoom && tiles[i]->type == tiletype_current)
+			if(tiles[i] != NULL && tiles[i]->zoom == i_zoom && tiles[i]->source == current_tilesource)
 				drawtile(tiles[i]);
+				
 		}
 	}
 	
-	if(downloading_tile != NULL)
-		drawtile(downloading_tile);
 }

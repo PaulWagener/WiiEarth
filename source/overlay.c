@@ -1,31 +1,31 @@
 #include "overlay.h"
 #include "tile.h"
+#include "GRRLIB/GRRLIB.h"
+
 
 #define DISPLAY_TIME 200
 #define FADEIN_SPEED 25
 #define FADEOUT_SPEED 40
 
+GRRLIB_texImg tiletype_texture = {0,0,NULL};
 
-u8 *tiletype_texture = NULL;
-
-enum tiletype overlay_tiletype = OSM;
+enum tile_source overlay_tilesource = OSM;
 u8 overlay_opacity = 0;
 u32 overlay_timedisplayed = 0;
 
-u8* get_tiletype_texture(enum tiletype tiletype)
+GRRLIB_texImg get_tiletype_texture(enum tile_source tiletype)
 {
-	u8 *texture;
+	GRRLIB_texImg texture;
 	switch(tiletype)
 	{
 		case OSM:
 			texture = GRRLIB_LoadTexture(openstreetmap);
 			break;
 
-
 		case LIVE_MAP:
 			texture = GRRLIB_LoadTexture(live_maps);
 			break;
-						
+	
 		case LIVE_SATELLITE:
 			texture = GRRLIB_LoadTexture(live_satellite);
 			break;
@@ -33,7 +33,7 @@ u8* get_tiletype_texture(enum tiletype tiletype)
 		case GOOGLE_MAP:
 			texture = GRRLIB_LoadTexture(google_maps);
 			break;
-			
+
 		case GOOGLE_SATELLITE:
 			texture = GRRLIB_LoadTexture(google_satellite);
 			break;
@@ -48,25 +48,32 @@ u8* get_tiletype_texture(enum tiletype tiletype)
 
 void updateoverlay()
 {
-	if(tiletype_texture == NULL)
-		tiletype_texture = get_tiletype_texture(tiletype_current);
-		
+	
 	//If the tiletype changed fade out the old overlay and once it is faded out put in a new texture
-	if(tiletype_current != overlay_tiletype)
+	if(current_tilesource != overlay_tilesource)
 	{
-		if(overlay_opacity > FADEOUT_SPEED) {
-			overlay_opacity -= FADEOUT_SPEED;
-		} else {
-			if(tiletype_texture != NULL)
-				free(tiletype_texture);
-				
-			tiletype_texture = get_tiletype_texture(tiletype_current);
-				
-			overlay_tiletype = tiletype_current;
-			overlay_timedisplayed = 0;
+		//The free() used to be before loading a new texture, this somehow leads to graphical glitches
+		//Probably related to using the same memory as the previous texture.	
+		u8* freetex = NULL;
+		if(tiletype_texture.data != NULL)
+		{
+			freetex = tiletype_texture.data;
 		}
+
+		tiletype_texture = get_tiletype_texture(current_tilesource);
 		
-	//Fade in, wait for DISPLAY_TIME, fade out
+		if(freetex)
+			free(freetex);
+		
+		overlay_tilesource = current_tilesource;
+		overlay_timedisplayed = 0;
+		overlay_opacity = 0;
+		
+	//1. Fade in
+	//2. Wait for DISPLAY_TIME
+	//3. Fade out
+	//4. ???
+	//5. Profit!
 	} else {
 		if(overlay_timedisplayed < DISPLAY_TIME) {
 			if(overlay_opacity < (255 - FADEIN_SPEED))
@@ -80,10 +87,13 @@ void updateoverlay()
 				overlay_opacity = 0;
 		}
 	}
+	
+	if(tiletype_texture.data == NULL)
+		tiletype_texture = get_tiletype_texture(current_tilesource);
 }
 
 void drawoverlay()
 {
-	GRRLIB_DrawImg(SCREEN_XCENTER - 100, 30, 200, 30, tiletype_texture, 0, 1, 1, overlay_opacity);
+	if(tiletype_texture.data != NULL)
+		GRRLIB_DrawImg(SCREEN_XCENTER - 100, 30, tiletype_texture, 0, 1, 1, 0xFFFFFF00 | overlay_opacity);
 }
-

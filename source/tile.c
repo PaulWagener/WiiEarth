@@ -6,17 +6,26 @@
 
 #include <ogc/lwp.h> // Thread
 
-struct tile* createtile(enum tiletype type, int x, int y, int zoom);
-bool tiledownloaded(enum tiletype type, int x, int y, int zoom);
+struct tile* createtile(enum tile_source type, int x, int y, int zoom);
+bool tiledownloaded(enum tile_source type, int x, int y, int zoom);
 void deletetile(struct tile* tile);
+void* download_and_place_tile(void* tile);
 void* downloadtile(void* tile);
 int getleastrelevanttile();
 
-enum tiletype tiletype_current = OSM;
+enum tile_source current_tilesource = OSM;
 struct tile* downloading_tile = NULL;
+struct tile* downloading_zoom1tile = NULL;
+
+static lwp_t downloadthread;
+
 
 /**
  * Method that adds new relevant tiles
+ *
+ * Its first priority is to download a 3x3 grid of tiles that fills the screen
+ * After that it will download all tiles 'above' the current view so that if the user quickly
+ * zooms out there are tiles there to prevent a lot of black screen.
  */
 void updatetiles()
 {
@@ -34,6 +43,34 @@ void updatetiles()
 		}
 	}
 	
+	
+	//Check if there are tiles that are done downloading
+	if(downloading_tile != NULL && downloading_tile->status == VISIBLE)
+	{
+		//Delete the tile that is most out of view and replace it with the newly downloaded tile
+		int i = getleastrelevanttile();
+	
+		if(tiles[i] != NULL)
+			deletetile(tiles[i]);
+
+		//Insert new tile
+		tiles[i] = downloading_tile;
+		tiles[i]->opacity = 0; //code in updatetiles() will fade the tile slowly into view
+		downloading_tile = NULL;
+	}
+	
+
+	if(downloading_zoom1tile != NULL && downloading_zoom1tile->status == VISIBLE)
+	{
+		downloading_zoom1tile->opacity = 255;
+		if(downloading_zoom1tile->x == 0 && downloading_zoom1tile->y == 0) zoom1_tiles[0] = downloading_zoom1tile;
+		if(downloading_zoom1tile->x == 0 && downloading_zoom1tile->y == 1) zoom1_tiles[1] = downloading_zoom1tile;
+		if(downloading_zoom1tile->x == 1 && downloading_zoom1tile->y == 0) zoom1_tiles[2] = downloading_zoom1tile;
+		if(downloading_zoom1tile->x == 1 && downloading_zoom1tile->y == 1) zoom1_tiles[3] = downloading_zoom1tile;
+
+		downloading_zoom1tile = NULL;
+	}
+	
 	int zoom = world_zoom_target < 1 ? 1 : world_zoom_target;
 	const int numtiles_across = pow(2, zoom); //Number of tiles from top to bottom on this zoomlevel
 	
@@ -42,14 +79,14 @@ void updatetiles()
 	const int center_y = world_y * numtiles_across;
 	
 	//No tile being downloaded, download a new tile
-	if(downloading_tile == NULL)
+	if(downloading_tile == NULL && downloading_zoom1tile == NULL)
 	{
 		//Find a tile in the 3x3 grid of tiles around the center of the screen
 		//that is closest to the center (and not yet downloaded)
 		int x, y,
 			local_x, local_y,
-			besttile_x, besttile_y;
-		bool besttile_found = FALSE;
+			tile_x, tile_y;
+		bool tile_found = FALSE;
 		float best_distance;
 
 		for(local_x = -1; local_x <= 1; local_x++)
@@ -65,7 +102,7 @@ void updatetiles()
 				if(y >= numtiles_across) y = numtiles_across-1;
 							
 				//If the tile is not yet downloaded it forms a candidate to be downloaded
-				if(!tiledownloaded(tiletype_current, x, y, zoom))
+				if(!tiledownloaded(current_tilesource, x, y, zoom))
 				{
 					//The best tile to download is one that has the least distance to the center of the screen
 					float tilecenter_x = (x / (float)numtiles_across) + (1 / (float)numtiles_across) / 2,
@@ -73,17 +110,17 @@ void updatetiles()
 
 					float distance = powf(world_x - tilecenter_x, 2) + powf(world_y - tilecenter_y, 2);
 
-					if(!besttile_found)
+					if(!tile_found)
 					{
-						besttile_found = TRUE;
-						besttile_x = x;
-						besttile_y = y;
+						tile_found = TRUE;
+						tile_x = x;
+						tile_y = y;
 						best_distance = distance;
 					} else {
 						if(distance < best_distance)
 						{
-							besttile_x = x;
-							besttile_y = y;
+							tile_x = x;
+							tile_y = y;
 							best_distance = distance;
 						}						
 					}
@@ -91,45 +128,68 @@ void updatetiles()
 				
 			}
 		}
-		
-		if(besttile_found)
+	
+		if(tile_found)
 		{
-			downloading_tile = createtile(tiletype_current, besttile_x, besttile_y, zoom);
+			downloading_tile = createtile(current_tilesource, tile_x, tile_y, zoom);
 			if(downloading_tile != NULL)
 			{
-				lwp_t thread;
-				LWP_CreateThread(&thread, downloadtile, downloading_tile, NULL, 0, 80);
+				LWP_CreateThread(&downloadthread, downloadtile, downloading_tile, NULL, 0, 80);
+			}
+		}
+		
+	}
+	
+	//Download the 4 tiles in zoom level 1 that show the whole world
+	//(displayed as a background)
+	if(downloading_tile == NULL && downloading_zoom1tile == NULL)
+	{
+		int i;
+		for(i = 0; i < 4; i++)
+		{
+			if(zoom1_tiles[i] == NULL)
+			{
+				switch(i)
+				{
+					case 0: downloading_zoom1tile = createtile(current_tilesource, 0, 0, 1); break;
+					case 1: downloading_zoom1tile = createtile(current_tilesource, 0, 1, 1); break;
+					case 2: downloading_zoom1tile = createtile(current_tilesource, 1, 0, 1); break;
+					case 3: downloading_zoom1tile = createtile(current_tilesource, 1, 1, 1); break;
+				}
+				LWP_CreateThread(&downloadthread, downloadtile, downloading_zoom1tile, NULL, 0, 80);
+				break;
 			}
 		}
 	}
 	
+	
 	//Switch tiletype
 	if(wpaddown & WPAD_BUTTON_2)
 	{
-		switch(tiletype_current)
+		switch(current_tilesource)
 		{
 			case OSM:
-				tiletype_current = LIVE_MAP;
+				current_tilesource = LIVE_MAP;
 				break;
 				
 			case LIVE_MAP:
-				tiletype_current = LIVE_SATELLITE;
+				current_tilesource = LIVE_SATELLITE;
 				break;
 				
 			case LIVE_SATELLITE:
-				tiletype_current = GOOGLE_MAP;
+				current_tilesource = GOOGLE_MAP;
 				break;
 				
 			case GOOGLE_MAP:
-				tiletype_current = GOOGLE_SATELLITE;
+				current_tilesource = GOOGLE_SATELLITE;
 				break;
 				
 			case GOOGLE_SATELLITE:
-				tiletype_current = GOOGLE_TERRAIN;
+				current_tilesource = GOOGLE_TERRAIN;
 				break;
 				
 			case GOOGLE_TERRAIN:
-				tiletype_current = OSM;
+				current_tilesource = OSM;
 				break;
 		}
 		
@@ -144,28 +204,37 @@ void updatetiles()
 			}
 		}
 		
+		for(i = 0; i < 4; i++)
+		{
+			if(zoom1_tiles[i] != NULL)
+			{
+				deletetile(zoom1_tiles[i]);
+				zoom1_tiles[i] = NULL;
+			}
+		}
+		
 	}
 	
 }
 
 void deletetile(struct tile* tile)
 {
-	if(tile->texture != NULL)
-		free(tile->texture);
+	if(tile->texture.data != NULL)
+		free(tile->texture.data);
 	
 	free(tile);
 }
 
 /**
- * Check if a certain tile is already in the list
+ * Returns if a tile is already in the 3x3 block of tiles
  */
-bool tiledownloaded(enum tiletype type, int x, int y, int zoom)
+bool tiledownloaded(enum tile_source source, int x, int y, int zoom)
 {
 	int i;
 	for(i = 0; i < NUM_TILES; i++)
 	{
 		if(tiles[i] != NULL &&
-			tiles[i]->type == type &&
+			tiles[i]->source == source &&
 			tiles[i]->x == x &&
 			tiles[i]->y == y &&
 			tiles[i]->zoom == zoom)
@@ -176,65 +245,49 @@ bool tiledownloaded(enum tiletype type, int x, int y, int zoom)
 	return FALSE;
 }
 
-u8* pngurl2texture(char *url)
+GRRLIB_texImg url2texture(char *url)
 {
 	struct block file = downloadfile(url);
 	
-	if(file.data == NULL)
-		return NULL;
-	
-	//Transform to PNG
-	u8* texture = GRRLIB_LoadTexture(file.data);
-	free(file.data);
-	return texture;
-}
-
-u8* jpegurl2texture(char *url)
-{
-	struct block file = downloadfile(url);
-	
-	if(file.data == NULL)
-		return NULL;
-
-	//These are values libjpeg cannot cope with and wich
-	//are sometimes returned by google for 404 pages or captcha pages
-	//libjpeg will exit() when it cannot parse a file which we do not want
-	if(file.data[0] != 0xff)
-	{
-		free(file.data);
-		return NULL;
+	if(file.data == NULL) {
+		return empty_texture;
+		
 	}
-	
-	//Transform to JPEG
-	u8* texture = GRRLIB_LoadTextureJPEG(file.data, file.size);
+	GRRLIB_texImg texture;
+	if(file.data[0]==0xFF && file.data[1]==0xD8 && file.data[2]==0xFF) {
+        texture = GRRLIB_LoadTextureJPEG(file.data, file.size);
+    }
+    else {
+        texture = GRRLIB_LoadTexture(file.data);
+    }
 	free(file.data);
 	return texture;
 }
 
-u8* getosmtile(int zoom, int x, int y)
+GRRLIB_texImg getosmtile(int zoom, int x, int y)
 {
-	char url[50];
+	char url[700];
 	int result = sprintf(url, "http://tile.openstreetmap.org/%i/%i/%i.png", zoom, x, y);
-
+	
 	if(result < 0)
-		return NULL;
+		return empty_texture;
 
-	return pngurl2texture(url);
+	return url2texture(url);
 }
 
-u8* getlivehybridtile(char hcode[])
+GRRLIB_texImg getlivehybridtile(char hcode[])
 {
 	char url[150];
 	int randomserver = abs(hcode[strlen(hcode)-1]) % 4;
 	int result = sprintf(url, "http://h%i.ortho.tiles.virtualearth.net/tiles/h%s.jpeg?g=167", randomserver, hcode);
 
 	if(result < 0)
-		return NULL;
+		return empty_texture;
 
-	return jpegurl2texture(url);
+	return url2texture(url);
 }
 
-u8* getlivemaptile(char rcode[], int zoom)
+GRRLIB_texImg getlivemaptile(char rcode[], int zoom)
 {
 	char url[150];
 	int randomserver = abs(rcode[strlen(rcode)-1]) % 4;
@@ -242,51 +295,51 @@ u8* getlivemaptile(char rcode[], int zoom)
 	int result = sprintf(url, "http://r%i.ortho.tiles.virtualearth.net/tiles/r%s.png?g=174&shading=hill", randomserver, rcode);
 
 	if(result < 0)
-		return NULL;
+		return empty_texture;
 
-	if( zoom <= 13)
-		return jpegurl2texture(url);
-	else
-		return pngurl2texture(url);
+	return url2texture(url);
 }
 
-u8* getgooglemaptile(float lattitude, float longitude, int zoom)
+GRRLIB_texImg getgooglemaptile(float lattitude, float longitude, int zoom)
 {
 	char url[300];
 
-	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=map&format=png32&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhSwnARdfbvgucbJu97QqwD5qLHOehSEXH_VJ226yc_On_LJtR2vbVpdEA", lattitude, longitude, zoom);
+	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=map&format=jpg&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhTLp7rNJYmgRqV7WukaV0vQ79jYwRQBAhP9xmVSeNw0BbDVzVYWf7NurA", lattitude, longitude, zoom);
 
 	if(result < 0)
-		return NULL;
+		return empty_texture;
 
-	return pngurl2texture(url);
+	return url2texture(url);
 }
 
-u8* getgooglesatellitetile(float lattitude, float longitude, int zoom)
+GRRLIB_texImg getgooglesatellitetile(float lattitude, float longitude, int zoom)
 {
 	char url[300];
-
 	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=hybrid&format=jpg&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhTLp7rNJYmgRqV7WukaV0vQ79jYwRQBAhP9xmVSeNw0BbDVzVYWf7NurA", lattitude, longitude, zoom);
 
 	if(result < 0)
-		return NULL;
+		return empty_texture;
 
-	return jpegurl2texture(url);
+	return url2texture(url);
 }
 
-u8* getgoogleterraintile(float lattitude, float longitude, int zoom)
+GRRLIB_texImg getgoogleterraintile(float lattitude, float longitude, int zoom)
 {
 	char url[300];
 
-	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=terrain&format=png32&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhTLp7rNJYmgRqV7WukaV0vQ79jYwRQBAhP9xmVSeNw0BbDVzVYWf7NurA", lattitude, longitude, zoom);
+	int result = sprintf(url, "http://maps.google.com/staticmap?center=%.5f,%.5f&zoom=%i&size=256x256&maptype=terrain&format=jpg&sensor=false&key=ABQIAAAAC0oGO8iGcGLO1jeaET0fbhTLp7rNJYmgRqV7WukaV0vQ79jYwRQBAhP9xmVSeNw0BbDVzVYWf7NurA", lattitude, longitude, zoom);
 
 	if(result < 0)
-		return NULL;
+		return empty_texture;
 
-	return pngurl2texture(url);
+	return url2texture(url);
 }
 
-char* converttoquartercode(int x, int y, int zoom, char codes[])
+/**
+ * See here: http://wiki.openstreetmap.org/wiki/QuadTiles
+ * for an explanation what quadtiles are
+ */
+char* converttoquadtiles(int x, int y, int zoom, char codes[])
 {
 	char *code = malloc(zoom + 1);
 	if(code == NULL)
@@ -327,7 +380,7 @@ char* converttoquartercode(int x, int y, int zoom, char codes[])
  * This is the interface through which all tile objects should be created
  * It creates a blank tile ready to be downloaded
  */
-struct tile* createtile(enum tiletype type, int x, int y, int zoom)
+struct tile* createtile(enum tile_source source, int x, int y, int zoom)
 {
     //Initialize a new tile
 	struct tile *tile = malloc(sizeof(struct tile));
@@ -338,11 +391,11 @@ struct tile* createtile(enum tiletype type, int x, int y, int zoom)
     tile->x = x;
     tile->y = y;
     tile->zoom = zoom;
-    tile->texture = NULL;
-    tile->type = type;
+    tile->texture = empty_texture;
+    tile->source = source;
+	tile->status = INITIALIZED;
 	
-	tile->texture = tex_loading;
-	tile->opacity = 100;
+	tile->opacity = 0;
 
     //Calculate the world position of the tile
     float tiles = pow(2, zoom);
@@ -368,13 +421,9 @@ struct tile* createtile(enum tiletype type, int x, int y, int zoom)
 void* downloadtile(void* tilepointer)
 {
 	struct tile* tile = tilepointer;
-	
-	if(tile == NULL)
-		return NULL;
-
 	float longitude, lattitude;
 	
-	if(tile->type == GOOGLE_MAP || tile->type == GOOGLE_SATELLITE || tile->type == GOOGLE_TERRAIN) {
+	if(tile->source == GOOGLE_MAP || tile->source == GOOGLE_SATELLITE || tile->source == GOOGLE_TERRAIN) {
 		const float PI = 3.1415f;
 
 		float centerx = tile->left + (tile->right - tile->left) / 2;
@@ -384,9 +433,10 @@ void* downloadtile(void* tilepointer)
 		lattitude = lattitude_rad * 180.0 / PI;
 	}
 	
-
+	tile->status = DOWNLOADING;
+	
 	//Downloads the tile by calling the appropriate API
-	switch(tile->type)
+	switch(tile->source)
 	{
 		case OSM:
 			tile->texture = getosmtile(tile->zoom, tile->x, tile->y);
@@ -394,14 +444,14 @@ void* downloadtile(void* tilepointer)
 			
 		case LIVE_SATELLITE:
 		{
-			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "0123");
+			char* code = converttoquadtiles(tile->x, tile->y, tile->zoom, "0123");
 			tile->texture = getlivehybridtile(code);
 			free(code);
 			break;
 		}
 		case LIVE_MAP:
 		{
-			char* code = converttoquartercode(tile->x, tile->y, tile->zoom, "0123");
+			char* code = converttoquadtiles(tile->x, tile->y, tile->zoom, "0123");
 			tile->texture = getlivemaptile(code, tile->zoom);
 			free(code);
 			break;
@@ -421,27 +471,15 @@ void* downloadtile(void* tilepointer)
 			tile->texture = getgoogleterraintile(lattitude, longitude, tile->zoom);
 			break;
 		}
-		default: break;
 	}
-
-	//Delete the tile that is most out of view and replace it with the newly downloaded tile
-	int i = getleastrelevanttile();
-
-	if(tiles[i] != NULL)
-	{
-		deletetile(tiles[i]);
-	}
-
-	//Insert new tile
-	tile->opacity = 0; //code in updatetiles() will fade the tile slowly into view
-	tiles[i] = tile;
 	
-	downloading_tile = NULL;
+	tile->status = VISIBLE;
 	return NULL;
 }
 
 /**
  * Find an index in the array of a tile that is least visible from all tiles on screen
+ * By calling this function you assume that such a tile exists outside of the 3x3 grid
  */
 int getleastrelevanttile()
 {
@@ -489,8 +527,10 @@ int getleastrelevanttile()
 
 	for(i = 0; i < NUM_TILES; i++)
 	{
-		if(tiles[i]->zoom == furthest_zoom	//Get a tile from the least relevant zoomlevel, but do NOT touch upon the tiles that are in the 3x3 grid of tiles in the center
-			&& !(tiles[i]->zoom == world_zoom_target && tiles[i]->type == tiletype_current && tiles[i]->x >= center_x-1  && tiles[i]->x <= center_x+1 && tiles[i]->y >= center_y-1 && tiles[i]->y <= center_y+1))
+		if(tiles[i]->zoom == furthest_zoom	//Get a tile from the least relevant zoomlevel,
+											//but do NOT touch upon the tiles that are in the 3x3 grid of tiles in the center
+											//		(We are trying to download those, not delete them!)
+			&& !(tiles[i]->zoom == world_zoom_target && tiles[i]->source == current_tilesource && tiles[i]->x >= center_x-1  && tiles[i]->x <= center_x+1 && tiles[i]->y >= center_y-1 && tiles[i]->y <= center_y+1))
 		{
 			const int numtiles_across = pow(2, tiles[i]->zoom); //Number of tiles from top to bottom on this zoomlevel
 			const float tilecenter_x = (tiles[i]->x / (float)numtiles_across) + (1 / (float)numtiles_across) / 2,
