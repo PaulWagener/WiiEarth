@@ -8,6 +8,9 @@
 
 /* Begin PBXFileReference section */
 		D322DF0316887188005D9B94 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		D3484EC4168887C400A260FA /* libjpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libjpeg.a; sourceTree = "<group>"; };
+		D3484EC5168887C400A260FA /* libpng.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libpng.a; sourceTree = "<group>"; };
+		D3484EC6168887C400A260FA /* libz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libz.a; sourceTree = "<group>"; };
 		D35CDC5816886E03003251F3 /* dns.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dns.c; sourceTree = "<group>"; };
 		D35CDC5916886E03003251F3 /* dns.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dns.h; sourceTree = "<group>"; };
 		D35CDC5B16886E03003251F3 /* cursor_grab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cursor_grab.c; sourceTree = "<group>"; };
@@ -37,9 +40,6 @@
 		D35CDC7316886E03003251F3 /* loading.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = loading.c; sourceTree = "<group>"; };
 		D35CDC7416886E03003251F3 /* loading.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = loading.h; sourceTree = "<group>"; };
 		D35CDC7516886E03003251F3 /* loading.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = loading.png; sourceTree = "<group>"; };
-		D35CDC7616886E03003251F3 /* openstreetmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = openstreetmap.c; sourceTree = "<group>"; };
-		D35CDC7716886E03003251F3 /* openstreetmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openstreetmap.h; sourceTree = "<group>"; };
-		D35CDC7816886E03003251F3 /* openstreetmap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = openstreetmap.png; sourceTree = "<group>"; };
 		D35CDC7916886E03003251F3 /* raw2c */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = raw2c; sourceTree = "<group>"; };
 		D35CDC7A16886E03003251F3 /* text.psd */ = {isa = PBXFileReference; lastKnownFileType = file; path = text.psd; sourceTree = "<group>"; };
 		D35CDC7C16886E03003251F3 /* GRRLIB.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GRRLIB.c; sourceTree = "<group>"; };
@@ -68,9 +68,20 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		D3484EC3168887C400A260FA /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				D3484EC4168887C400A260FA /* libjpeg.a */,
+				D3484EC5168887C400A260FA /* libpng.a */,
+				D3484EC6168887C400A260FA /* libz.a */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
 		D35CDC4A16886D94003251F3 = {
 			isa = PBXGroup;
 			children = (
+				D3484EC3168887C400A260FA /* lib */,
 				D322DF0316887188005D9B94 /* Makefile */,
 				D35CDC5716886E03003251F3 /* source */,
 			);
@@ -132,9 +143,6 @@
 				D35CDC7316886E03003251F3 /* loading.c */,
 				D35CDC7416886E03003251F3 /* loading.h */,
 				D35CDC7516886E03003251F3 /* loading.png */,
-				D35CDC7616886E03003251F3 /* openstreetmap.c */,
-				D35CDC7716886E03003251F3 /* openstreetmap.h */,
-				D35CDC7816886E03003251F3 /* openstreetmap.png */,
 				D35CDC7916886E03003251F3 /* raw2c */,
 				D35CDC7A16886E03003251F3 /* text.psd */,
 			);
@@ -185,7 +193,7 @@
 /* Begin PBXLegacyTarget section */
 		D35CDC5116886D94003251F3 /* WiiEarth */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "DEVKITPRO=/opt/devkitpro DEVKITPPC=/opt/devkitpro/devkitppc make build";
+			buildArgumentsString = "DEVKITPRO=/opt/devkitpro DEVKITPPC=/opt/devkitpro/devkitppc make $(ACTION)";
 			buildConfigurationList = D35CDC5416886D94003251F3 /* Build configuration list for PBXLegacyTarget "WiiEarth" */;
 			buildPhases = (
 			);

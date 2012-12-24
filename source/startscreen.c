@@ -25,8 +25,8 @@ void startscreen()
 	initialize();
 
 	printf("\n\n\n\n\n\n\n\n");
-	printf("      Wii Earth 2.2\n");
-	printf("         Images are from openstreetmap.org, maps.google.com and maps.live.com\n\n");
+	printf("      Wii Earth 2.3\n");
+	printf("         Images are from maps.google.com and maps.live.com\n\n");
 	
     printf("      Waiting for network to initialize...");
 	

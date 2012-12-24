@@ -111,6 +111,8 @@ run: build
 reload:
 	./wiiload -r $(OUTPUT).dol
 
+archive:
+	zip WiiEarth/WiiEarth.zip WiiEarth/boot.dol WiiEarth/meta.xml WiiEarth/icon.png 
 
 #---------------------------------------------------------------------------------
 else

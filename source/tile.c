@@ -13,7 +13,7 @@ void* download_and_place_tile(void* tile);
 void* downloadtile(void* tile);
 int getleastrelevanttile();
 
-enum tile_source current_tilesource = OSM;
+enum tile_source current_tilesource = LIVE_MAP;
 struct tile* downloading_tile = NULL;
 struct tile* downloading_zoom1tile = NULL;
 
@@ -162,38 +162,26 @@ void updatetiles()
 		}
 	}
 	
-	
+	enum tile_source old_tilesource = current_tilesource;
+    
 	//Switch tiletype
 	if(wpaddown & WPAD_BUTTON_2)
 	{
-		switch(current_tilesource)
-		{
-			case OSM:
-				current_tilesource = LIVE_MAP;
-				break;
-				
-			case LIVE_MAP:
-				current_tilesource = LIVE_SATELLITE;
-				break;
-				
-			case LIVE_SATELLITE:
-				current_tilesource = GOOGLE_MAP;
-				break;
-				
-			case GOOGLE_MAP:
-				current_tilesource = GOOGLE_SATELLITE;
-				break;
-				
-			case GOOGLE_SATELLITE:
-				current_tilesource = GOOGLE_TERRAIN;
-				break;
-				
-			case GOOGLE_TERRAIN:
-				current_tilesource = OSM;
-				break;
-		}
-		
-		
+        if(current_tilesource >= NUM_TILE_SOURCES - 1)
+            current_tilesource = 0;
+        else
+            current_tilesource++;
+    }
+    
+    if(wpaddown & WPAD_BUTTON_1)
+    {
+        if(current_tilesource == 0)
+            current_tilesource = NUM_TILE_SOURCES - 1;
+        else
+            current_tilesource--;
+    }
+	
+	if(current_tilesource != old_tilesource) {
 		//Delete all current tiles
 		for(i = 0; i < NUM_TILES; i++)
 		{
@@ -262,17 +250,6 @@ GRRLIB_texImg url2texture(char *url)
     }
 	free(file.data);
 	return texture;
-}
-
-GRRLIB_texImg getosmtile(int zoom, int x, int y)
-{
-	char url[700];
-	int result = sprintf(url, "http://tile.openstreetmap.org/%i/%i/%i.png", zoom, x, y);
-	
-	if(result < 0)
-		return empty_texture;
-
-	return url2texture(url);
 }
 
 GRRLIB_texImg getlivehybridtile(char hcode[])
@@ -438,10 +415,6 @@ void* downloadtile(void* tilepointer)
 	//Downloads the tile by calling the appropriate API
 	switch(tile->source)
 	{
-		case OSM:
-			tile->texture = getosmtile(tile->zoom, tile->x, tile->y);
-			break;
-			
 		case LIVE_SATELLITE:
 		{
 			char* code = converttoquadtiles(tile->x, tile->y, tile->zoom, "0123");
@@ -471,6 +444,9 @@ void* downloadtile(void* tilepointer)
 			tile->texture = getgoogleterraintile(lattitude, longitude, tile->zoom);
 			break;
 		}
+            
+        case NUM_TILE_SOURCES:
+            break;
 	}
 	
 	tile->status = VISIBLE;

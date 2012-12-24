@@ -9,7 +9,7 @@
 
 GRRLIB_texImg tiletype_texture = {0,0,NULL};
 
-enum tile_source overlay_tilesource = OSM;
+enum tile_source overlay_tilesource = LIVE_MAP;
 u8 overlay_opacity = 0;
 u32 overlay_timedisplayed = 0;
 
@@ -18,10 +18,6 @@ GRRLIB_texImg get_tiletype_texture(enum tile_source tiletype)
 	GRRLIB_texImg texture;
 	switch(tiletype)
 	{
-		case OSM:
-			texture = GRRLIB_LoadTexture(openstreetmap);
-			break;
-
 		case LIVE_MAP:
 			texture = GRRLIB_LoadTexture(live_maps);
 			break;
@@ -41,7 +37,9 @@ GRRLIB_texImg get_tiletype_texture(enum tile_source tiletype)
 		case GOOGLE_TERRAIN:
 			texture = GRRLIB_LoadTexture(google_terrain);
 			break;
-
+            
+        case NUM_TILE_SOURCES:
+            break;
 	}
 	return texture;
 }
