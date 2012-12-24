@@ -19,7 +19,7 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source source/gfx source/gfx/cursors source/GRRLIB source/GRRLIB/fonts source/libpng source/libpng/pngu source/libjpeg
 DATA		:=	data  
-INCLUDES	:=
+INCLUDES	:=	include
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -48,7 +48,7 @@ LIBDIRS	:= $(CURDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT	:=	$(CURDIR)/WiiEarth/boot
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
@@ -91,7 +91,6 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					-L$(LIBOGC_LIB)
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
@@ -105,12 +104,12 @@ clean:
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
-run:
-	psoload $(TARGET).dol
+run: build
+	./wiiload $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
 reload:
-	psoload -r $(TARGET).dol
+	./wiiload -r $(OUTPUT).dol
 
 
 #---------------------------------------------------------------------------------

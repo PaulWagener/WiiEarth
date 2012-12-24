@@ -1,0 +1,285 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		D322DF0316887188005D9B94 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		D35CDC5816886E03003251F3 /* dns.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dns.c; sourceTree = "<group>"; };
+		D35CDC5916886E03003251F3 /* dns.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dns.h; sourceTree = "<group>"; };
+		D35CDC5B16886E03003251F3 /* cursor_grab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cursor_grab.c; sourceTree = "<group>"; };
+		D35CDC5C16886E03003251F3 /* cursor_grab.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cursor_grab.h; sourceTree = "<group>"; };
+		D35CDC5D16886E03003251F3 /* cursor_grab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cursor_grab.png; sourceTree = "<group>"; };
+		D35CDC5E16886E03003251F3 /* cursor_hand.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cursor_hand.c; sourceTree = "<group>"; };
+		D35CDC5F16886E03003251F3 /* cursor_hand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cursor_hand.h; sourceTree = "<group>"; };
+		D35CDC6016886E03003251F3 /* cursor_hand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cursor_hand.png; sourceTree = "<group>"; };
+		D35CDC6116886E03003251F3 /* google_maps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = google_maps.c; sourceTree = "<group>"; };
+		D35CDC6216886E03003251F3 /* google_maps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = google_maps.h; sourceTree = "<group>"; };
+		D35CDC6316886E03003251F3 /* google_maps.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = google_maps.png; sourceTree = "<group>"; };
+		D35CDC6416886E03003251F3 /* google_satellite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = google_satellite.c; sourceTree = "<group>"; };
+		D35CDC6516886E03003251F3 /* google_satellite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = google_satellite.h; sourceTree = "<group>"; };
+		D35CDC6616886E03003251F3 /* google_satellite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = google_satellite.png; sourceTree = "<group>"; };
+		D35CDC6716886E03003251F3 /* google_terrain.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = google_terrain.c; sourceTree = "<group>"; };
+		D35CDC6816886E03003251F3 /* google_terrain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = google_terrain.h; sourceTree = "<group>"; };
+		D35CDC6916886E03003251F3 /* google_terrain.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = google_terrain.png; sourceTree = "<group>"; };
+		D35CDC6A16886E03003251F3 /* live_hybrid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = live_hybrid.c; sourceTree = "<group>"; };
+		D35CDC6B16886E03003251F3 /* live_hybrid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = live_hybrid.h; sourceTree = "<group>"; };
+		D35CDC6C16886E03003251F3 /* live_hybrid.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = live_hybrid.png; sourceTree = "<group>"; };
+		D35CDC6D16886E03003251F3 /* live_maps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = live_maps.c; sourceTree = "<group>"; };
+		D35CDC6E16886E03003251F3 /* live_maps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = live_maps.h; sourceTree = "<group>"; };
+		D35CDC6F16886E03003251F3 /* live_maps.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = live_maps.png; sourceTree = "<group>"; };
+		D35CDC7016886E03003251F3 /* live_satellite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = live_satellite.c; sourceTree = "<group>"; };
+		D35CDC7116886E03003251F3 /* live_satellite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = live_satellite.h; sourceTree = "<group>"; };
+		D35CDC7216886E03003251F3 /* live_satellite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = live_satellite.png; sourceTree = "<group>"; };
+		D35CDC7316886E03003251F3 /* loading.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = loading.c; sourceTree = "<group>"; };
+		D35CDC7416886E03003251F3 /* loading.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = loading.h; sourceTree = "<group>"; };
+		D35CDC7516886E03003251F3 /* loading.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = loading.png; sourceTree = "<group>"; };
+		D35CDC7616886E03003251F3 /* openstreetmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = openstreetmap.c; sourceTree = "<group>"; };
+		D35CDC7716886E03003251F3 /* openstreetmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openstreetmap.h; sourceTree = "<group>"; };
+		D35CDC7816886E03003251F3 /* openstreetmap.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = openstreetmap.png; sourceTree = "<group>"; };
+		D35CDC7916886E03003251F3 /* raw2c */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = raw2c; sourceTree = "<group>"; };
+		D35CDC7A16886E03003251F3 /* text.psd */ = {isa = PBXFileReference; lastKnownFileType = file; path = text.psd; sourceTree = "<group>"; };
+		D35CDC7C16886E03003251F3 /* GRRLIB.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GRRLIB.c; sourceTree = "<group>"; };
+		D35CDC7D16886E03003251F3 /* GRRLIB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRRLIB.h; sourceTree = "<group>"; };
+		D35CDC7E16886E03003251F3 /* http.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = http.c; sourceTree = "<group>"; };
+		D35CDC7F16886E03003251F3 /* http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http.h; sourceTree = "<group>"; };
+		D35CDC8016886E03003251F3 /* input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = input.c; sourceTree = "<group>"; };
+		D35CDC8116886E03003251F3 /* input.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = input.h; sourceTree = "<group>"; };
+		D35CDC8316886E03003251F3 /* jconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jconfig.h; sourceTree = "<group>"; };
+		D35CDC8416886E03003251F3 /* jmorecfg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jmorecfg.h; sourceTree = "<group>"; };
+		D35CDC8516886E03003251F3 /* jpeglib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jpeglib.h; sourceTree = "<group>"; };
+		D35CDC8616886E03003251F3 /* jpgogc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jpgogc.h; sourceTree = "<group>"; };
+		D35CDC8816886E03003251F3 /* png.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = png.h; sourceTree = "<group>"; };
+		D35CDC8916886E03003251F3 /* pngconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngconf.h; sourceTree = "<group>"; };
+		D35CDC8B16886E03003251F3 /* pngu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngu.c; sourceTree = "<group>"; };
+		D35CDC8C16886E03003251F3 /* pngu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngu.h; sourceTree = "<group>"; };
+		D35CDC8D16886E03003251F3 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		D35CDC8E16886E03003251F3 /* overlay.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = overlay.c; sourceTree = "<group>"; };
+		D35CDC8F16886E03003251F3 /* overlay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = overlay.h; sourceTree = "<group>"; };
+		D35CDC9016886E03003251F3 /* startscreen.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = startscreen.c; sourceTree = "<group>"; };
+		D35CDC9116886E03003251F3 /* startscreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = startscreen.h; sourceTree = "<group>"; };
+		D35CDC9216886E03003251F3 /* tile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tile.c; sourceTree = "<group>"; };
+		D35CDC9316886E03003251F3 /* tile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tile.h; sourceTree = "<group>"; };
+		D35CDC9416886E03003251F3 /* world.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = world.c; sourceTree = "<group>"; };
+		D35CDC9516886E03003251F3 /* world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = world.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		D35CDC4A16886D94003251F3 = {
+			isa = PBXGroup;
+			children = (
+				D322DF0316887188005D9B94 /* Makefile */,
+				D35CDC5716886E03003251F3 /* source */,
+			);
+			sourceTree = "<group>";
+		};
+		D35CDC5716886E03003251F3 /* source */ = {
+			isa = PBXGroup;
+			children = (
+				D35CDC5816886E03003251F3 /* dns.c */,
+				D35CDC5916886E03003251F3 /* dns.h */,
+				D35CDC5A16886E03003251F3 /* gfx */,
+				D35CDC7B16886E03003251F3 /* GRRLIB */,
+				D35CDC7E16886E03003251F3 /* http.c */,
+				D35CDC7F16886E03003251F3 /* http.h */,
+				D35CDC8016886E03003251F3 /* input.c */,
+				D35CDC8116886E03003251F3 /* input.h */,
+				D35CDC8216886E03003251F3 /* libjpeg */,
+				D35CDC8716886E03003251F3 /* libpng */,
+				D35CDC8D16886E03003251F3 /* main.c */,
+				D35CDC8E16886E03003251F3 /* overlay.c */,
+				D35CDC8F16886E03003251F3 /* overlay.h */,
+				D35CDC9016886E03003251F3 /* startscreen.c */,
+				D35CDC9116886E03003251F3 /* startscreen.h */,
+				D35CDC9216886E03003251F3 /* tile.c */,
+				D35CDC9316886E03003251F3 /* tile.h */,
+				D35CDC9416886E03003251F3 /* world.c */,
+				D35CDC9516886E03003251F3 /* world.h */,
+			);
+			path = source;
+			sourceTree = "<group>";
+		};
+		D35CDC5A16886E03003251F3 /* gfx */ = {
+			isa = PBXGroup;
+			children = (
+				D35CDC5B16886E03003251F3 /* cursor_grab.c */,
+				D35CDC5C16886E03003251F3 /* cursor_grab.h */,
+				D35CDC5D16886E03003251F3 /* cursor_grab.png */,
+				D35CDC5E16886E03003251F3 /* cursor_hand.c */,
+				D35CDC5F16886E03003251F3 /* cursor_hand.h */,
+				D35CDC6016886E03003251F3 /* cursor_hand.png */,
+				D35CDC6116886E03003251F3 /* google_maps.c */,
+				D35CDC6216886E03003251F3 /* google_maps.h */,
+				D35CDC6316886E03003251F3 /* google_maps.png */,
+				D35CDC6416886E03003251F3 /* google_satellite.c */,
+				D35CDC6516886E03003251F3 /* google_satellite.h */,
+				D35CDC6616886E03003251F3 /* google_satellite.png */,
+				D35CDC6716886E03003251F3 /* google_terrain.c */,
+				D35CDC6816886E03003251F3 /* google_terrain.h */,
+				D35CDC6916886E03003251F3 /* google_terrain.png */,
+				D35CDC6A16886E03003251F3 /* live_hybrid.c */,
+				D35CDC6B16886E03003251F3 /* live_hybrid.h */,
+				D35CDC6C16886E03003251F3 /* live_hybrid.png */,
+				D35CDC6D16886E03003251F3 /* live_maps.c */,
+				D35CDC6E16886E03003251F3 /* live_maps.h */,
+				D35CDC6F16886E03003251F3 /* live_maps.png */,
+				D35CDC7016886E03003251F3 /* live_satellite.c */,
+				D35CDC7116886E03003251F3 /* live_satellite.h */,
+				D35CDC7216886E03003251F3 /* live_satellite.png */,
+				D35CDC7316886E03003251F3 /* loading.c */,
+				D35CDC7416886E03003251F3 /* loading.h */,
+				D35CDC7516886E03003251F3 /* loading.png */,
+				D35CDC7616886E03003251F3 /* openstreetmap.c */,
+				D35CDC7716886E03003251F3 /* openstreetmap.h */,
+				D35CDC7816886E03003251F3 /* openstreetmap.png */,
+				D35CDC7916886E03003251F3 /* raw2c */,
+				D35CDC7A16886E03003251F3 /* text.psd */,
+			);
+			path = gfx;
+			sourceTree = "<group>";
+		};
+		D35CDC7B16886E03003251F3 /* GRRLIB */ = {
+			isa = PBXGroup;
+			children = (
+				D35CDC7C16886E03003251F3 /* GRRLIB.c */,
+				D35CDC7D16886E03003251F3 /* GRRLIB.h */,
+			);
+			path = GRRLIB;
+			sourceTree = "<group>";
+		};
+		D35CDC8216886E03003251F3 /* libjpeg */ = {
+			isa = PBXGroup;
+			children = (
+				D35CDC8316886E03003251F3 /* jconfig.h */,
+				D35CDC8416886E03003251F3 /* jmorecfg.h */,
+				D35CDC8516886E03003251F3 /* jpeglib.h */,
+				D35CDC8616886E03003251F3 /* jpgogc.h */,
+			);
+			path = libjpeg;
+			sourceTree = "<group>";
+		};
+		D35CDC8716886E03003251F3 /* libpng */ = {
+			isa = PBXGroup;
+			children = (
+				D35CDC8816886E03003251F3 /* png.h */,
+				D35CDC8916886E03003251F3 /* pngconf.h */,
+				D35CDC8A16886E03003251F3 /* pngu */,
+			);
+			path = libpng;
+			sourceTree = "<group>";
+		};
+		D35CDC8A16886E03003251F3 /* pngu */ = {
+			isa = PBXGroup;
+			children = (
+				D35CDC8B16886E03003251F3 /* pngu.c */,
+				D35CDC8C16886E03003251F3 /* pngu.h */,
+			);
+			path = pngu;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		D35CDC5116886D94003251F3 /* WiiEarth */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "DEVKITPRO=/opt/devkitpro DEVKITPPC=/opt/devkitpro/devkitppc make build";
+			buildConfigurationList = D35CDC5416886D94003251F3 /* Build configuration list for PBXLegacyTarget "WiiEarth" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/env;
+			buildWorkingDirectory = /Users/paulwagener/WiiEarth;
+			dependencies = (
+			);
+			name = WiiEarth;
+			passBuildSettingsInEnvironment = 0;
+			productName = WiiEarth;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		D35CDC4C16886D94003251F3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0450;
+				ORGANIZATIONNAME = "Paul Wagener";
+			};
+			buildConfigurationList = D35CDC4F16886D94003251F3 /* Build configuration list for PBXProject "WiiEarth" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = D35CDC4A16886D94003251F3;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D35CDC5116886D94003251F3 /* WiiEarth */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		D35CDC5216886D94003251F3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		D35CDC5316886D94003251F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		D35CDC5516886D94003251F3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		D35CDC5616886D94003251F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D35CDC4F16886D94003251F3 /* Build configuration list for PBXProject "WiiEarth" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D35CDC5216886D94003251F3 /* Debug */,
+				D35CDC5316886D94003251F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D35CDC5416886D94003251F3 /* Build configuration list for PBXLegacyTarget "WiiEarth" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D35CDC5516886D94003251F3 /* Debug */,
+				D35CDC5616886D94003251F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D35CDC4C16886D94003251F3 /* Project object */;
+}

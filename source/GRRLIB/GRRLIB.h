@@ -16,6 +16,8 @@
 
 #include "../libpng/pngu/pngu.h"
 
+typedef struct {f32 x, y, z; } Vector;
+
 void GRRLIB_Widescreen(bool wd_on);
 
 typedef struct GRRLIB_texImg {
